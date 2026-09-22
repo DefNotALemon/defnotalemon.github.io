@@ -69,8 +69,14 @@ function whoosh(up) {
 }
 
 /* ---------- state ---------- */
+let liftTimer = 0;
 export function setSpace(on, { animate = true } = {}) {
   lift.target = on ? 1 : 0;
+  clearTimeout(liftTimer);
+  if (animate && !reduced()) {
+    body.classList.add("lifting");
+    liftTimer = setTimeout(() => body.classList.remove("lifting"), (DUR + 0.5) * 1000);
+  }
   if (!animate || reduced()) {
     lift.p = lift.target;
     body.classList.add("no-anim");

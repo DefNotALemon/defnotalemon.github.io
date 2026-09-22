@@ -18,6 +18,7 @@ let ctx;
 let stars = [];
 let deep = []; // the second, denser field that only shows once the ground is gone
 let nebulae = [];
+const nebCanvas = document.createElement("canvas"); // nebulae are static: painted once per resize
 
 const BW = 256;
 const BH = 144;
@@ -34,7 +35,7 @@ function n3(x, y) {
 function setup() {
   ({ ctx, w, h } = resizeCanvas(canvas, 1.75));
   stars = makeStars(Math.floor((w * h) / 2800), w, h);
-  deep = makeStars(Math.floor((w * h) / 1400), w, h);
+  deep = makeStars(Math.floor((w * h) / 2600), w, h);
   for (const s of deep) s.r *= 0.7;
   nebulae = [
     { x: 0.22, y: 0.3, r: 0.42, c: "120, 80, 200" },
@@ -43,6 +44,7 @@ function setup() {
   ];
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
+  paintNebulae();
 }
 setup();
 addEventListener("resize", setup);
@@ -320,26 +322,37 @@ function mix(a, b, t) {
   return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * t)).join(",")})`;
 }
 
+function paintNebulae() {
+  // half resolution is plenty for something this soft
+  nebCanvas.width = Math.max(1, w >> 1);
+  nebCanvas.height = Math.max(1, h >> 1);
+  const c = nebCanvas.getContext("2d");
+  c.clearRect(0, 0, nebCanvas.width, nebCanvas.height);
+  for (const n of nebulae) {
+    const cx = n.x * nebCanvas.width;
+    const cy = n.y * nebCanvas.height;
+    const r = n.r * Math.max(nebCanvas.width, nebCanvas.height);
+    const g = c.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, `rgba(${n.c}, 0.16)`);
+    g.addColorStop(0.5, `rgba(${n.c}, 0.05)`);
+    g.addColorStop(1, `rgba(${n.c}, 0)`);
+    c.fillStyle = g;
+    c.fillRect(cx - r, cy - r, r * 2, r * 2);
+  }
+}
+
 function drawNebulae(e) {
   if (e <= 0.02) return;
   ctx.save();
   ctx.globalCompositeOperation = "screen";
-  for (const n of nebulae) {
-    const cx = n.x * w;
-    const cy = n.y * h + (1 - e) * h * 0.5;
-    const r = n.r * Math.max(w, h);
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, `rgba(${n.c}, ${0.16 * e})`);
-    g.addColorStop(0.5, `rgba(${n.c}, ${0.05 * e})`);
-    g.addColorStop(1, `rgba(${n.c}, 0)`);
-    ctx.fillStyle = g;
-    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-  }
+  ctx.globalAlpha = e;
+  ctx.drawImage(nebCanvas, 0, (1 - e) * h * 0.5, w, h);
   ctx.restore();
 }
 
 // Stars with optional vertical streaks while the camera is moving.
-function drawField(list, t, driftX, driftY, alphaMul, streak) {
+function drawField(list, t, driftX, driftY, alphaMul, streak, cheap = false) {
+  if (alphaMul <= 0.01) return;
   ctx.fillStyle = "#eef6ff";
   ctx.strokeStyle = "#eef6ff";
   ctx.lineCap = "round";
@@ -354,6 +367,8 @@ function drawField(list, t, driftX, driftY, alphaMul, streak) {
       ctx.moveTo(x, y);
       ctx.lineTo(x, y - streak * s.r);
       ctx.stroke();
+    } else if (cheap) {
+      ctx.fillRect(x - s.r, y - s.r, s.r * 2, s.r * 2);
     } else {
       ctx.beginPath();
       ctx.arc(x, y, s.r, 0, Math.PI * 2);
@@ -379,7 +394,7 @@ function tick(now) {
   drawSky(e);
   drawNebulae(e);
   // near stars drop as we climb; deep field fades in behind them
-  drawField(deep, t, still ? 0 : t * 0.7, rise * 0.55, e, streak * 0.6);
+  drawField(deep, t, still ? 0 : t * 0.7, rise * 0.55, e, streak * 0.6, true);
   drawField(stars, t, still ? 0 : t * 2, rise * 0.9, 1, streak);
 
   if (e < 0.999) {
