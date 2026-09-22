@@ -65,11 +65,11 @@ function paintAurora(t, fade = 1) {
   const still = reduced();
 
   // ease the pointer so the curtain leans rather than snaps
-  aim.x += (mouse.x / w - aim.x) * 0.06;
-  aim.y += (mouse.y / h - aim.y) * 0.06;
+  aim.x += (mouse.x / w - aim.x) * 0.22;
+  aim.y += (mouse.y / h - aim.y) * 0.22;
 
-  // the pixel work runs at 20fps; the upscale below still runs every frame
-  if (auroraFrame++ % 3 === 0 || still) {
+  // the pixel pass runs every frame now that it is cheap enough to
+  if (auroraFrame++ % 1 === 0 || still) {
     const d = pixels.data;
     d.fill(0);
     const pull = (aim.x - 0.5) * 0.45;
@@ -80,9 +80,10 @@ function paintAurora(t, fade = 1) {
       const u = x / BW + pull;
       const dx = x / BW - aim.x;
       const near = Math.exp(-(dx * dx) / 0.05); // 1 under the pointer, fades over ~a third of the screen
-      const shape = n3(u * 2.2 + time * 0.045, time * 0.035);
-      const fold = n3(u * 4.8 - time * 0.025, 9.1 + time * 0.02);
-      const flicker = still ? 0 : near * (0.5 + 0.5 * Math.sin(time * 9 + x * 0.35)) * 0.55;
+      // slow drift: the curtain should breathe, not flap
+      const shape = n3(u * 2.2 + time * 0.02, time * 0.016);
+      const fold = n3(u * 4.8 - time * 0.011, 9.1 + time * 0.009);
+      const flicker = still ? 0 : near * (0.5 + 0.5 * Math.sin(time * 7 + x * 0.35)) * 0.55;
       const peak = 0.17 + shape * 0.2 + lift;
       const spread = 0.12 + fold * 0.1 + near * 0.07;
       // a second, fainter band lower in the sky so the curtain fills more of it
@@ -90,7 +91,7 @@ function paintAurora(t, fade = 1) {
       const spread2 = 0.1 + shape * 0.08 + near * 0.05;
       const strength = (0.16 + shape * 0.2) * (1 + near * 0.6 + flicker * 0.8);
       const mag = Math.max(0, fold * 1.15 - 0.25 + near * 0.25);
-      const shimmerT = time * (0.4 + near * 3.5);
+      const shimmerT = time * (0.18 + near * 3);
       const colPhase = noise(u * 9.5 + near * 4, 2.7) * 6.28; // one noise call per column instead of one per pixel
 
       for (let y = 0; y < ROWS; y++) {
