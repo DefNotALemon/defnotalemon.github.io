@@ -1,0 +1,83 @@
+:root{
+  --ink:#F4F1EA;
+  --mut:#A8B3C4;
+  --dim:#6E7B90;
+  --line:rgba(244,241,234,.12);
+  --mono:"IBM Plex Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  color:var(--ink);
+  background:#02040a;
+  font-family:var(--sans, "Outfit", system-ui, sans-serif);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit; text-decoration:none}
+:focus-visible{outline:2px solid #9dffc8; outline-offset:3px}
+canvas.sky{position:fixed; inset:0; width:100%; height:100%; z-index:0; display:block}
+.grain{position:fixed; inset:0; z-index:2; pointer-events:none; opacity:.045; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.nav{
+  position:fixed; top:0; left:0; right:0; z-index:20;
+  display:flex; align-items:center; gap:1.2rem;
+  padding:16px clamp(18px,4vw,40px);
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  background:linear-gradient(to bottom, rgba(2,4,10,.72), transparent);
+}
+.nav .mark{opacity:.7}
+.nav b{font-weight:600; letter-spacing:.12em}
+.nav .links{margin-left:auto; display:flex; gap:1.25rem; flex-wrap:wrap}
+.nav a{color:var(--mut); border-bottom:1px solid transparent; padding-bottom:2px}
+.nav a:hover,.nav a.on{color:var(--ink); border-color:currentColor}
+@media (max-width:700px){
+  .nav .links a:nth-child(n+4){display:none}
+}
+
+.overlay{position:relative; z-index:5}
+.hero{
+  min-height:100vh; display:flex; flex-direction:column; justify-content:flex-end;
+  padding:0 clamp(20px,5vw,64px) 12vh;
+}
+.kicker{font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:#9dffc8; margin-bottom:1.1rem}
+.hero h1{
+  font-family:var(--disp, "Syne", sans-serif);
+  font-weight:700; letter-spacing:-.04em;
+  font-size:clamp(3.2rem, 11vw, 8.2rem); line-height:.9;
+  text-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.hero h1 span{display:block}
+.lede{max-width:42ch; margin-top:1.4rem; color:var(--mut); font-size:1.08rem; line-height:1.65}
+.stats{display:flex; flex-wrap:wrap; gap:1.6rem 2.4rem; margin-top:2.2rem; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim)}
+.stats b{display:block; color:var(--ink); font-size:13px; margin-top:4px; letter-spacing:.08em}
+
+.panel{
+  position:relative; z-index:5;
+  margin:0 clamp(16px,4vw,48px) 4rem;
+  padding:2.4rem clamp(20px,4vw,40px);
+  background:rgba(5,8,16,.55);
+  border:1px solid var(--line);
+  backdrop-filter:blur(16px);
+  border-radius:16px;
+}
+.panel h2{font-family:var(--disp, "Syne", sans-serif); font-size:clamp(1.4rem,3vw,2rem); letter-spacing:-.02em; margin-bottom:1rem}
+.grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem}
+.card{padding:1.2rem 1.15rem; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.03)}
+.card small{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#9dffc8}
+.card h3{margin:.45rem 0 .35rem; font-size:1.15rem}
+.card p{color:var(--mut); font-size:.92rem; line-height:1.55}
+@media (max-width:800px){.grid{grid-template-columns:1fr}}
+
+.foot{
+  position:relative; z-index:5;
+  display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+  padding:1.4rem clamp(20px,4vw,48px) 2.2rem;
+  font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--dim)
+}
+.foot a{color:var(--ink); border-bottom:1px solid var(--line)}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+}
