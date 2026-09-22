@@ -1,6 +1,6 @@
 # Northern lights
 
-A single-page night sky over the Tana valley: aurora, a lemon-slice moon, and a mountain range — with a white arcade button in the corner. Press it and the land and the lights drop away, the page climbs into the stars, and a row of cabinets lights up. Press it again to come back down.
+A single-page night sky over the Tana valley: aurora, a lemon-slice moon, and a mountain range — and the lemon-slice moon is a button. Press it and the land and the lights drop away, the page climbs into the stars, and a row of cabinets lights up. The way back down is the button at the bottom of the arcade (or the lemon again), and it's a slower ride.
 
 ## The arcade
 
@@ -14,7 +14,7 @@ Games open inside the site in a full-screen player (Escape or the `◂ Arcade` b
 
 Current cabinets: **Voidmaw** — an arcade shooter (source: [DefNotALemon/voidmaw](https://github.com/DefNotALemon/voidmaw)).
 
-Repo: [github.com/DefNotALemon/defnotalemon.github.io](https://github.com/DefNotALemon/defnotalemon.github.io)
+Repo: [github.com/DefNotALemon/playlay](https://github.com/DefNotALemon/playlay)
 
 ## Local
 
@@ -27,4 +27,4 @@ npm run dev
 
 Settings → Pages → Source: GitHub Actions.
 
-[https://defnotalemon.github.io/](https://defnotalemon.github.io/)
+[https://defnotalemon.github.io/playlay/](https://defnotalemon.github.io/playlay/)

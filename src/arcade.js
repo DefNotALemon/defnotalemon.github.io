@@ -7,7 +7,9 @@ import { reduced } from "./skykit.js";
 
 export const lift = { target: 0, p: 0, vel: 0 };
 
-const DUR = 2.6; // seconds, ground → stars
+const DUR_UP = 2.6; // seconds, ground → stars
+const DUR_DOWN = 4.6; // the way back is a long, slow settle
+const dur = (up) => (up ? DUR_UP : DUR_DOWN);
 const body = document.body;
 const coin = document.querySelector("#coin");
 const coinLabel = document.querySelector("#coinLabel");
@@ -48,7 +50,8 @@ function thunk() {
 function whoosh(up) {
   const a = ac();
   if (!a) return;
-  const n = (a.sampleRate * DUR) | 0;
+  const D = dur(up);
+  const n = (a.sampleRate * D) | 0;
   const buf = a.createBuffer(1, n, a.sampleRate);
   const d = buf.getChannelData(0);
   for (let i = 0; i < n; i++) {
@@ -61,7 +64,7 @@ function whoosh(up) {
   f.type = "bandpass";
   f.Q.value = 0.9;
   f.frequency.setValueAtTime(up ? 180 : 1400, a.currentTime);
-  f.frequency.exponentialRampToValueAtTime(up ? 1400 : 180, a.currentTime + DUR);
+  f.frequency.exponentialRampToValueAtTime(up ? 1400 : 180, a.currentTime + D);
   const g = a.createGain();
   g.gain.value = 0.12;
   s.connect(f).connect(g).connect(a.destination);
@@ -75,7 +78,7 @@ export function setSpace(on, { animate = true } = {}) {
   clearTimeout(liftTimer);
   if (animate && !reduced()) {
     body.classList.add("lifting");
-    liftTimer = setTimeout(() => body.classList.remove("lifting"), (DUR + 0.5) * 1000);
+    liftTimer = setTimeout(() => body.classList.remove("lifting"), (dur(on) + 0.5) * 1000);
   }
   if (!animate || reduced()) {
     lift.p = lift.target;
@@ -93,21 +96,22 @@ export function setSpace(on, { animate = true } = {}) {
 // Called by aurora.js each frame with the elapsed seconds.
 export function stepLift(dt) {
   const before = lift.p;
-  const rate = dt / DUR;
+  const rate = dt / dur(lift.target > lift.p);
   if (lift.p < lift.target) lift.p = Math.min(lift.target, lift.p + rate);
   else if (lift.p > lift.target) lift.p = Math.max(lift.target, lift.p - rate);
   lift.vel = (lift.p - before) / Math.max(dt, 1e-4);
 }
 
 /* ---------- the button ---------- */
-coin.addEventListener("click", () => {
-  const on = !body.classList.contains("space");
+function press(on) {
   thunk();
   if (!reduced()) whoosh(on);
   coin.classList.add("down");
   setTimeout(() => coin.classList.remove("down"), 140);
   setSpace(on);
-});
+}
+coin.addEventListener("click", () => press(!body.classList.contains("space")));
+document.querySelector("#ground").addEventListener("click", () => press(false));
 
 /* ---------- cabinets ---------- */
 function cabinet(g) {

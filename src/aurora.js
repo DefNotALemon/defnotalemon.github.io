@@ -19,6 +19,7 @@ let stars = [];
 let deep = []; // the second, denser field that only shows once the ground is gone
 let nebulae = [];
 const nebCanvas = document.createElement("canvas"); // nebulae are static: painted once per resize
+const land = document.createElement("canvas"); // mountains, forest, ground, cabin: painted once per resize
 
 const BW = 256;
 const BH = 144;
@@ -45,9 +46,8 @@ function setup() {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
   paintNebulae();
+  paintLand();
 }
-setup();
-addEventListener("resize", setup);
 
 // The aurora is painted into a 256×144 buffer, softened once at small size,
 // and then scaled up. The previous version blurred it at full screen size on
@@ -68,8 +68,8 @@ function paintAurora(t, fade = 1) {
   aim.x += (mouse.x / w - aim.x) * 0.06;
   aim.y += (mouse.y / h - aim.y) * 0.06;
 
-  // the pixel work runs at 30fps; the upscale below still runs every frame
-  if (auroraFrame++ % 2 === 0 || still) {
+  // the pixel work runs at 20fps; the upscale below still runs every frame
+  if (auroraFrame++ % 3 === 0 || still) {
     const d = pixels.data;
     d.fill(0);
     const pull = (aim.x - 0.5) * 0.45;
@@ -83,24 +83,25 @@ function paintAurora(t, fade = 1) {
       const shape = n3(u * 2.2 + time * 0.045, time * 0.035);
       const fold = n3(u * 4.8 - time * 0.025, 9.1 + time * 0.02);
       const flicker = still ? 0 : near * (0.5 + 0.5 * Math.sin(time * 9 + x * 0.35)) * 0.55;
-      const peak = 0.18 + shape * 0.22 + lift;
-      const spread = 0.15 + fold * 0.12 + near * 0.08;
+      const peak = 0.17 + shape * 0.2 + lift;
+      const spread = 0.12 + fold * 0.1 + near * 0.07;
       // a second, fainter band lower in the sky so the curtain fills more of it
-      const peak2 = 0.58 + fold * 0.22 - shape * 0.1 + lift;
-      const spread2 = 0.12 + shape * 0.1 + near * 0.06;
+      const peak2 = 0.5 + fold * 0.18 - shape * 0.1 + lift;
+      const spread2 = 0.1 + shape * 0.08 + near * 0.05;
       const strength = (0.16 + shape * 0.2) * (1 + near * 0.6 + flicker * 0.8);
       const mag = Math.max(0, fold * 1.15 - 0.25 + near * 0.25);
-      const shimmerT = time * (0.06 + near * 0.6);
+      const shimmerT = time * (0.4 + near * 3.5);
+      const colPhase = noise(u * 9.5 + near * 4, 2.7) * 6.28; // one noise call per column instead of one per pixel
 
       for (let y = 0; y < ROWS; y++) {
         const v = y / BH;
         const dy = (v - peak) / spread;
         const dy2 = (v - peak2) / spread2;
-        let i = (Math.exp(-dy * dy) + Math.exp(-dy2 * dy2) * 0.6) * strength;
+        let i = (Math.exp(-dy * dy) + Math.exp(-dy2 * dy2) * 0.5) * strength;
         if (i < 0.01) continue;
-        const grain = 0.72 + 0.28 * noise(u * (9.5 + near * 6), v * 1.35 + shimmerT);
+        const grain = 0.76 + 0.24 * Math.sin(v * 9 + colPhase + shimmerT);
         i *= grain;
-        i *= Math.max(0, 1 - (v - 0.7) / 0.3);
+        i *= Math.max(0, 1 - (v - 0.62) / 0.3);
 
         const r = 50 + mag * 130;
         const g = 155 + (1 - mag) * 35;
@@ -126,98 +127,9 @@ function paintAurora(t, fade = 1) {
   ctx.save();
   ctx.globalCompositeOperation = "screen";
   ctx.globalAlpha = 0.62 * fade;
-  ctx.drawImage(mid, -w * 0.04, -h * 0.03 + sink, w * 1.08, h * 0.98);
+  ctx.drawImage(mid, -w * 0.04, -h * 0.03 + sink, w * 1.08, h * 0.82);
   ctx.globalAlpha = 0.38 * fade;
-  ctx.drawImage(mid, 0, sink, w, h * 0.9);
-  ctx.restore();
-}
-
-function drawMoon() {
-  const mx = w * 0.82;
-  const my = h * 0.16;
-  const rad = Math.min(w, h) * 0.055;
-  const segs = 9;
-
-  ctx.save();
-  ctx.translate(mx, my);
-  ctx.rotate(-0.18);
-
-  const halo = ctx.createRadialGradient(0, 0, rad * 0.4, 0, 0, rad * 2.6);
-  halo.addColorStop(0, "rgba(255, 220, 80, 0.22)");
-  halo.addColorStop(0.45, "rgba(255, 196, 50, 0.08)");
-  halo.addColorStop(1, "rgba(255, 190, 40, 0)");
-  ctx.fillStyle = halo;
-  ctx.beginPath();
-  ctx.arc(0, 0, rad * 2.6, 0, Math.PI * 2);
-  ctx.fill();
-
-  // rind
-  ctx.fillStyle = "#E8B423";
-  ctx.beginPath();
-  ctx.arc(0, 0, rad, 0, Math.PI * 2);
-  ctx.fill();
-
-  // pith
-  ctx.fillStyle = "#F6EED8";
-  ctx.beginPath();
-  ctx.arc(0, 0, rad * 0.86, 0, Math.PI * 2);
-  ctx.fill();
-
-  // pulp
-  const pulp = ctx.createRadialGradient(-rad * 0.2, -rad * 0.15, rad * 0.1, 0, 0, rad * 0.8);
-  pulp.addColorStop(0, "#FFE56A");
-  pulp.addColorStop(1, "#F0C43A");
-  ctx.fillStyle = pulp;
-  ctx.beginPath();
-  ctx.arc(0, 0, rad * 0.78, 0, Math.PI * 2);
-  ctx.fill();
-
-  // vesicles — soft dots in each wedge
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(0, 0, rad * 0.76, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.fillStyle = "rgba(255, 248, 180, 0.35)";
-  for (let i = 0; i < segs; i++) {
-    const a0 = (i / segs) * Math.PI * 2;
-    const a1 = ((i + 1) / segs) * Math.PI * 2;
-    const mid = (a0 + a1) / 2;
-    for (let k = 0; k < 7; k++) {
-      const t = 0.22 + (k % 4) * 0.14;
-      const jitter = ((k * 17 + i * 13) % 10) / 90;
-      const rr = rad * (t + jitter);
-      ctx.beginPath();
-      ctx.arc(Math.cos(mid + jitter) * rr, Math.sin(mid - jitter * 0.6) * rr, rad * 0.045, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-
-  // membranes
-  ctx.strokeStyle = "rgba(255, 248, 230, 0.72)";
-  ctx.lineWidth = Math.max(1.2, rad * 0.035);
-  ctx.lineCap = "round";
-  for (let i = 0; i < segs; i++) {
-    const a = (i / segs) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(a) * rad * 0.1, Math.sin(a) * rad * 0.1);
-    ctx.lineTo(Math.cos(a) * rad * 0.78, Math.sin(a) * rad * 0.78);
-    ctx.stroke();
-  }
-
-  // core
-  ctx.fillStyle = "#F7F1DC";
-  ctx.beginPath();
-  ctx.arc(0, 0, rad * 0.12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // rind highlight
-  ctx.strokeStyle = "rgba(255, 236, 140, 0.55)";
-  ctx.lineWidth = Math.max(2, rad * 0.06);
-  ctx.beginPath();
-  ctx.arc(0, 0, rad * 0.93, -2.4, -0.9);
-  ctx.stroke();
-
+  ctx.drawImage(mid, 0, sink, w, h * 0.74);
   ctx.restore();
 }
 
@@ -338,6 +250,29 @@ function drawCabin() {
   ctx.shadowBlur = 0;
 }
 
+function paintLand() {
+  const dpr = Math.min(devicePixelRatio || 1, 1.75);
+  land.width = Math.floor(w * dpr);
+  land.height = Math.floor(h * dpr);
+  const main = ctx;
+  ctx = land.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const ranges = drawMountains();
+  forestOn(ranges.far, 9, 3.5, 8, "#0a1018");
+  forestOn(ranges.near, 7, 5, 13, "#02040a");
+  drawGround();
+  forestOn(
+    { ys: ranges.near.ys.map((y) => Math.max(y, h * 0.83)), step: ranges.near.step },
+    8,
+    6,
+    12,
+    "#010309"
+  );
+  drawCabin();
+  ctx = main;
+}
+
 function drawSky(e) {
   const g = ctx.createLinearGradient(0, 0, 0, h);
   g.addColorStop(0, "#02040c");
@@ -412,6 +347,9 @@ function drawField(list, t, driftX, driftY, alphaMul, streak, cheap = false) {
 
 const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
 
+setup(); // after every const above is initialised — paintLand reads the peak tables
+addEventListener("resize", setup);
+
 let last = performance.now();
 function tick(now) {
   const t = now / 1000;
@@ -430,26 +368,8 @@ function tick(now) {
   drawField(stars, t, still ? 0 : t * 2, rise * 0.9, 1, streak);
 
   if (e < 0.999) {
-    ctx.save();
-    ctx.translate(0, rise * 1.25); // the land goes down faster than the sky
-    drawMoon();
-    ctx.restore();
     paintAurora(t, 1 - Math.min(1, lift.p * 1.5));
-    ctx.save();
-    ctx.translate(0, rise * 1.35);
-    const ranges = drawMountains();
-    forestOn(ranges.far, 9, 3.5, 8, "#0a1018");
-    forestOn(ranges.near, 7, 5, 13, "#02040a");
-    drawGround();
-    forestOn(
-      { ys: ranges.near.ys.map((y) => Math.max(y, h * 0.83)), step: ranges.near.step },
-      8,
-      6,
-      12,
-      "#010309"
-    );
-    drawCabin();
-    ctx.restore();
+    ctx.drawImage(land, 0, rise * 1.35, w, h); // the land goes down faster than the sky
   }
 
   requestAnimationFrame(tick);
