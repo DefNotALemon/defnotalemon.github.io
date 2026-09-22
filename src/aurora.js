@@ -49,54 +49,82 @@ function setup() {
 setup();
 addEventListener("resize", setup);
 
+// The aurora is painted into a 256×144 buffer, softened once at small size,
+// and then scaled up. The previous version blurred it at full screen size on
+// every frame with ctx.filter, which is what was eating the frame budget.
+const mid = document.createElement("canvas");
+mid.width = 384;
+mid.height = 216;
+const mctx = mid.getContext("2d");
+const aim = { x: 0.5, y: 0.3 }; // smoothed pointer, in 0..1 screen space
+let auroraFrame = 0;
+
 function paintAurora(t, fade = 1) {
   if (fade <= 0.01) return;
-  const d = pixels.data;
-  d.fill(0);
-  const pull = (mouse.x / w - 0.5) * 0.28;
   const time = reduced() ? 5.4 : t;
+  const still = reduced();
 
-  for (let x = 0; x < BW; x++) {
-    const u = x / BW + pull;
-    const shape = n3(u * 2.2 + time * 0.045, time * 0.035);
-    const fold = n3(u * 4.8 - time * 0.025, 9.1 + time * 0.02);
-    const peak = 0.17 + shape * 0.16;
-    const spread = 0.11 + fold * 0.09;
-    const strength = 0.18 + shape * 0.22;
-    const mag = Math.max(0, fold * 1.15 - 0.25);
+  // ease the pointer so the curtain leans rather than snaps
+  aim.x += (mouse.x / w - aim.x) * 0.06;
+  aim.y += (mouse.y / h - aim.y) * 0.06;
 
-    for (let y = 0; y < (BH * 0.7) | 0; y++) {
-      const v = y / BH;
-      const dy = (v - peak) / spread;
-      let i = Math.exp(-dy * dy) * strength;
-      if (i < 0.01) continue;
-      const grain = 0.72 + 0.28 * noise(u * 9.5, v * 1.35 + time * 0.06);
-      i *= grain;
-      i *= Math.max(0, 1 - (v - 0.28) / 0.18);
+  // the pixel work runs at 30fps; the upscale below still runs every frame
+  if (auroraFrame++ % 2 === 0 || still) {
+    const d = pixels.data;
+    d.fill(0);
+    const pull = (aim.x - 0.5) * 0.45;
+    const lift = (aim.y - 0.4) * 0.18; // pointer low on screen = curtain reaches lower
+    const ROWS = (BH * 0.96) | 0;
 
-      const r = 50 + mag * 130;
-      const g = 155 + (1 - mag) * 35;
-      const b = 100 + mag * 70;
-      const idx = (y * BW + x) << 2;
-      const glow = i * 2.05;
-      d[idx] = Math.min(255, r * glow);
-      d[idx + 1] = Math.min(255, g * glow);
-      d[idx + 2] = Math.min(255, b * glow);
-      d[idx + 3] = Math.min(165, i * 380);
+    for (let x = 0; x < BW; x++) {
+      const u = x / BW + pull;
+      const dx = x / BW - aim.x;
+      const near = Math.exp(-(dx * dx) / 0.05); // 1 under the pointer, fades over ~a third of the screen
+      const shape = n3(u * 2.2 + time * 0.045, time * 0.035);
+      const fold = n3(u * 4.8 - time * 0.025, 9.1 + time * 0.02);
+      const flicker = still ? 0 : near * (0.5 + 0.5 * Math.sin(time * 9 + x * 0.35)) * 0.55;
+      const peak = 0.2 + shape * 0.22 + lift;
+      const spread = 0.14 + fold * 0.12 + near * 0.08;
+      const strength = (0.18 + shape * 0.22) * (1 + near * 0.9 + flicker);
+      const mag = Math.max(0, fold * 1.15 - 0.25 + near * 0.25);
+      const shimmerT = time * (0.06 + near * 0.6);
+
+      for (let y = 0; y < ROWS; y++) {
+        const v = y / BH;
+        const dy = (v - peak) / spread;
+        let i = Math.exp(-dy * dy) * strength;
+        if (i < 0.01) continue;
+        const grain = 0.72 + 0.28 * noise(u * (9.5 + near * 6), v * 1.35 + shimmerT);
+        i *= grain;
+        i *= Math.max(0, 1 - (v - 0.5) / 0.35);
+
+        const r = 50 + mag * 130;
+        const g = 155 + (1 - mag) * 35;
+        const b = 100 + mag * 70;
+        const idx = (y * BW + x) << 2;
+        const glow = i * 2.05;
+        d[idx] = Math.min(255, r * glow);
+        d[idx + 1] = Math.min(255, g * glow);
+        d[idx + 2] = Math.min(255, b * glow);
+        d[idx + 3] = Math.min(175, i * 380);
+      }
     }
+    octx.putImageData(pixels, 0, 0);
+
+    // soften once, at buffer size — cheap
+    mctx.clearRect(0, 0, mid.width, mid.height);
+    mctx.filter = "blur(4px)";
+    mctx.drawImage(off, 0, 0, mid.width, mid.height);
+    mctx.filter = "none";
   }
 
-  octx.putImageData(pixels, 0, 0);
+  const sink = (1 - fade) * h * 0.35; // the curtain sags as we climb past it
   ctx.save();
   ctx.globalCompositeOperation = "screen";
-  const sink = (1 - fade) * h * 0.35; // the curtain sags as we climb past it
-  ctx.filter = "blur(18px)";
-  ctx.globalAlpha = 0.65 * fade;
-  ctx.drawImage(off, -w * 0.03, -h * 0.02 + sink, w * 1.06, h * 0.52);
-  ctx.filter = "blur(6px)";
-  ctx.globalAlpha = 0.4 * fade;
-  ctx.drawImage(off, 0, sink, w, h * 0.48);
-  ctx.filter = "none";
+  ctx.globalAlpha = 0.7 * fade;
+  ctx.drawImage(mid, -w * 0.04, -h * 0.03 + sink, w * 1.08, h * 0.8);
+  ctx.globalAlpha = 0.45 * fade;
+  ctx.drawImage(mid, 0, sink, w, h * 0.72);
   ctx.restore();
 }
 
