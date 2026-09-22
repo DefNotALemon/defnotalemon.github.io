@@ -1,4 +1,5 @@
-import { resizeCanvas, fbm, noise, makeStars, drawStars, reduced } from "./skykit.js";
+import { resizeCanvas, fbm, noise, makeStars, reduced } from "./skykit.js";
+import { lift, stepLift } from "./arcade.js";
 
 const canvas = document.querySelector("#sky");
 const mouse = { x: innerWidth / 2, y: innerHeight * 0.3 };
@@ -15,6 +16,8 @@ let w = innerWidth;
 let h = innerHeight;
 let ctx;
 let stars = [];
+let deep = []; // the second, denser field that only shows once the ground is gone
+let nebulae = [];
 
 const BW = 256;
 const BH = 144;
@@ -31,13 +34,21 @@ function n3(x, y) {
 function setup() {
   ({ ctx, w, h } = resizeCanvas(canvas, 1.75));
   stars = makeStars(Math.floor((w * h) / 2800), w, h);
+  deep = makeStars(Math.floor((w * h) / 1400), w, h);
+  for (const s of deep) s.r *= 0.7;
+  nebulae = [
+    { x: 0.22, y: 0.3, r: 0.42, c: "120, 80, 200" },
+    { x: 0.74, y: 0.62, r: 0.5, c: "40, 140, 170" },
+    { x: 0.55, y: 0.12, r: 0.3, c: "200, 90, 120" },
+  ];
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 }
 setup();
 addEventListener("resize", setup);
 
-function paintAurora(t) {
+function paintAurora(t, fade = 1) {
+  if (fade <= 0.01) return;
   const d = pixels.data;
   d.fill(0);
   const pull = (mouse.x / w - 0.5) * 0.28;
@@ -76,12 +87,13 @@ function paintAurora(t) {
   octx.putImageData(pixels, 0, 0);
   ctx.save();
   ctx.globalCompositeOperation = "screen";
+  const sink = (1 - fade) * h * 0.35; // the curtain sags as we climb past it
   ctx.filter = "blur(18px)";
-  ctx.globalAlpha = 0.65;
-  ctx.drawImage(off, -w * 0.03, -h * 0.02, w * 1.06, h * 0.52);
+  ctx.globalAlpha = 0.65 * fade;
+  ctx.drawImage(off, -w * 0.03, -h * 0.02 + sink, w * 1.06, h * 0.52);
   ctx.filter = "blur(6px)";
-  ctx.globalAlpha = 0.4;
-  ctx.drawImage(off, 0, 0, w, h * 0.48);
+  ctx.globalAlpha = 0.4 * fade;
+  ctx.drawImage(off, 0, sink, w, h * 0.48);
   ctx.filter = "none";
   ctx.restore();
 }
@@ -292,35 +304,106 @@ function drawCabin() {
   ctx.shadowBlur = 0;
 }
 
-function drawSky() {
+function drawSky(e) {
   const g = ctx.createLinearGradient(0, 0, 0, h);
   g.addColorStop(0, "#02040c");
-  g.addColorStop(0.35, "#071428");
-  g.addColorStop(0.7, "#0a1a22");
-  g.addColorStop(1, "#02060b");
+  g.addColorStop(0.35, mix("#071428", "#03050f", e));
+  g.addColorStop(0.7, mix("#0a1a22", "#04060f", e));
+  g.addColorStop(1, mix("#02060b", "#010208", e));
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 }
 
+function mix(a, b, t) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * t)).join(",")})`;
+}
+
+function drawNebulae(e) {
+  if (e <= 0.02) return;
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  for (const n of nebulae) {
+    const cx = n.x * w;
+    const cy = n.y * h + (1 - e) * h * 0.5;
+    const r = n.r * Math.max(w, h);
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, `rgba(${n.c}, ${0.16 * e})`);
+    g.addColorStop(0.5, `rgba(${n.c}, ${0.05 * e})`);
+    g.addColorStop(1, `rgba(${n.c}, 0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  }
+  ctx.restore();
+}
+
+// Stars with optional vertical streaks while the camera is moving.
+function drawField(list, t, driftX, driftY, alphaMul, streak) {
+  ctx.fillStyle = "#eef6ff";
+  ctx.strokeStyle = "#eef6ff";
+  ctx.lineCap = "round";
+  for (const s of list) {
+    const tw = 0.55 + 0.45 * Math.sin(t * s.sp + s.tw);
+    ctx.globalAlpha = s.a * tw * alphaMul;
+    const x = (s.x + driftX + w) % w;
+    const y = (s.y + driftY + h) % h;
+    if (streak > 1.5) {
+      ctx.lineWidth = s.r * 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y - streak * s.r);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(x, y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+
+let last = performance.now();
 function tick(now) {
   const t = now / 1000;
-  drawSky();
-  drawMoon();
-  drawStars(ctx, stars, t, reduced() ? 0 : t * 2, 0, w, h);
-  paintAurora(t);
+  const dt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  stepLift(dt);
+  const e = easeInOut(lift.p); // 0 on the ground, 1 in the stars
+  const rise = e * h; // how far the camera has climbed, in px
+  const still = reduced();
+  const streak = still ? 0 : Math.abs(lift.vel) * h * 0.012;
 
-  const ranges = drawMountains();
-  forestOn(ranges.far, 9, 3.5, 8, "#0a1018");
-  forestOn(ranges.near, 7, 5, 13, "#02040a");
-  drawGround();
-  forestOn(
-    { ys: ranges.near.ys.map((y) => Math.max(y, h * 0.83)), step: ranges.near.step },
-    8,
-    6,
-    12,
-    "#010309"
-  );
-  drawCabin();
+  drawSky(e);
+  drawNebulae(e);
+  // near stars drop as we climb; deep field fades in behind them
+  drawField(deep, t, still ? 0 : t * 0.7, rise * 0.55, e, streak * 0.6);
+  drawField(stars, t, still ? 0 : t * 2, rise * 0.9, 1, streak);
+
+  if (e < 0.999) {
+    ctx.save();
+    ctx.translate(0, rise * 1.25); // the land goes down faster than the sky
+    drawMoon();
+    ctx.restore();
+    paintAurora(t, 1 - Math.min(1, lift.p * 1.5));
+    ctx.save();
+    ctx.translate(0, rise * 1.35);
+    const ranges = drawMountains();
+    forestOn(ranges.far, 9, 3.5, 8, "#0a1018");
+    forestOn(ranges.near, 7, 5, 13, "#02040a");
+    drawGround();
+    forestOn(
+      { ys: ranges.near.ys.map((y) => Math.max(y, h * 0.83)), step: ranges.near.step },
+      8,
+      6,
+      12,
+      "#010309"
+    );
+    drawCabin();
+    ctx.restore();
+  }
 
   requestAnimationFrame(tick);
 }

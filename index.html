@@ -22,6 +22,10 @@
   <span class="mark">69°22′ N</span>
   <b>Kjøllefjord</b>
 </header>
+<div class="coin-wrap">
+  <button id="coin" class="coin" type="button" aria-pressed="false" aria-label="Arcade: lift off into the stars"></button>
+  <span id="coinLabel" class="coin-label">arcade</span>
+</div>
 <div class="overlay">
   <section class="hero">
     <p class="kicker">field station · finnmark · kp <span id="kp">5.2</span></p>
@@ -54,6 +58,22 @@
       </article>
     </div>
   </section>
+</div>
+<section id="arcade" class="arcade" aria-label="Arcade">
+  <div class="arcade-inner">
+    <p class="kicker">playlay · orbit · coin-op</p>
+    <h2><span>Pick a</span><span>cabinet.</span></h2>
+    <p class="lede">The ground is a long way down now. Every machine up here runs in the browser — drop a coin, play, press escape to come back to the row.</p>
+    <div id="cabinets" class="cabinets"></div>
+  </div>
+</section>
+<div id="player" class="player" hidden>
+  <div class="player-bar">
+    <button id="playerExit" type="button" class="exit">◂ Arcade</button>
+    <span id="playerTitle" class="player-title"></span>
+    <a id="playerOpen" class="open" href="#" target="_blank" rel="noopener">Open in a tab ↗</a>
+  </div>
+  <iframe id="playerFrame" title="Game" allow="autoplay; fullscreen"></iframe>
 </div>
 <footer class="foot">
   <span>Kjøllefjord Field Station · a room with a sky</span>
