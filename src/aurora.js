@@ -232,23 +232,67 @@ function forestOn(range, spacing, sizeMin, sizeMax, color) {
 }
 
 function drawCabin() {
-  const x = w * 0.16;
+  const x = w * 0.7; // right of the hero copy, so the stats row never sits on top of it
   const y = h * 0.86;
-  ctx.fillStyle = "#07090f";
-  ctx.fillRect(x, y - 28, 54, 28);
+  const W = 58;
+  const H = 30;
+
+  // warm timber walls — distinct from the blue-black hills behind
+  ctx.fillStyle = "#4a2e1c";
+  ctx.fillRect(x, y - H, W, H);
+  // log courses
+  ctx.strokeStyle = "rgba(0,0,0,0.28)";
+  ctx.lineWidth = 1;
+  for (let ly = y - H + 5; ly < y; ly += 5) {
+    ctx.beginPath();
+    ctx.moveTo(x, ly + 0.5);
+    ctx.lineTo(x + W, ly + 0.5);
+    ctx.stroke();
+  }
+  // roof
+  ctx.fillStyle = "#2b1810";
   ctx.beginPath();
-  ctx.moveTo(x - 6, y - 28);
-  ctx.lineTo(x + 27, y - 48);
-  ctx.lineTo(x + 60, y - 28);
+  ctx.moveTo(x - 7, y - H);
+  ctx.lineTo(x + W / 2, y - H - 22);
+  ctx.lineTo(x + W + 7, y - H);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = "rgba(255, 186, 92, 0.45)";
-  ctx.fillRect(x + 12, y - 18, 8, 8);
-  ctx.fillRect(x + 32, y - 18, 8, 8);
-  ctx.shadowBlur = 8;
-  ctx.shadowColor = "rgba(255,180,80,0.35)";
-  ctx.fillRect(x + 12, y - 18, 8, 8);
+  // snow on the roof
+  ctx.strokeStyle = "#dbe7f2";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y - H - 1);
+  ctx.lineTo(x + W / 2, y - H - 21);
+  ctx.lineTo(x + W + 5, y - H - 1);
+  ctx.stroke();
+  // chimney
+  ctx.fillStyle = "#3a3f47";
+  ctx.fillRect(x + W - 16, y - H - 16, 6, 12);
+  // door
+  ctx.fillStyle = "#1c100a";
+  ctx.fillRect(x + W / 2 - 4, y - 13, 8, 13);
+  // windows, lit
+  ctx.fillStyle = "rgba(255, 190, 96, 0.92)";
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = "rgba(255,180,80,0.6)";
+  ctx.fillRect(x + 9, y - 21, 9, 8);
+  ctx.fillRect(x + W - 18, y - 21, 9, 8);
   ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(40,20,10,0.8)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + 13.5, y - 21);
+  ctx.lineTo(x + 13.5, y - 13);
+  ctx.moveTo(x + W - 13.5, y - 21);
+  ctx.lineTo(x + W - 13.5, y - 13);
+  ctx.stroke();
+  // a little light spilling onto the snow
+  const spill = ctx.createRadialGradient(x + W / 2, y + 2, 2, x + W / 2, y + 2, 46);
+  spill.addColorStop(0, "rgba(255,180,80,0.22)");
+  spill.addColorStop(1, "rgba(255,180,80,0)");
+  ctx.fillStyle = spill;
+  ctx.fillRect(x - 30, y - 6, W + 60, 30);
 }
 
 function paintLand() {
