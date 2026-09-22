@@ -83,30 +83,34 @@ function paintAurora(t, fade = 1) {
       const shape = n3(u * 2.2 + time * 0.045, time * 0.035);
       const fold = n3(u * 4.8 - time * 0.025, 9.1 + time * 0.02);
       const flicker = still ? 0 : near * (0.5 + 0.5 * Math.sin(time * 9 + x * 0.35)) * 0.55;
-      const peak = 0.2 + shape * 0.22 + lift;
-      const spread = 0.14 + fold * 0.12 + near * 0.08;
-      const strength = (0.18 + shape * 0.22) * (1 + near * 0.9 + flicker);
+      const peak = 0.18 + shape * 0.22 + lift;
+      const spread = 0.15 + fold * 0.12 + near * 0.08;
+      // a second, fainter band lower in the sky so the curtain fills more of it
+      const peak2 = 0.58 + fold * 0.22 - shape * 0.1 + lift;
+      const spread2 = 0.12 + shape * 0.1 + near * 0.06;
+      const strength = (0.16 + shape * 0.2) * (1 + near * 0.6 + flicker * 0.8);
       const mag = Math.max(0, fold * 1.15 - 0.25 + near * 0.25);
       const shimmerT = time * (0.06 + near * 0.6);
 
       for (let y = 0; y < ROWS; y++) {
         const v = y / BH;
         const dy = (v - peak) / spread;
-        let i = Math.exp(-dy * dy) * strength;
+        const dy2 = (v - peak2) / spread2;
+        let i = (Math.exp(-dy * dy) + Math.exp(-dy2 * dy2) * 0.6) * strength;
         if (i < 0.01) continue;
         const grain = 0.72 + 0.28 * noise(u * (9.5 + near * 6), v * 1.35 + shimmerT);
         i *= grain;
-        i *= Math.max(0, 1 - (v - 0.5) / 0.35);
+        i *= Math.max(0, 1 - (v - 0.7) / 0.3);
 
         const r = 50 + mag * 130;
         const g = 155 + (1 - mag) * 35;
         const b = 100 + mag * 70;
         const idx = (y * BW + x) << 2;
-        const glow = i * 2.05;
+        const glow = Math.min(1.15, i * 2.05); // capped so it stays green/magenta instead of blowing out to white
         d[idx] = Math.min(255, r * glow);
         d[idx + 1] = Math.min(255, g * glow);
         d[idx + 2] = Math.min(255, b * glow);
-        d[idx + 3] = Math.min(175, i * 380);
+        d[idx + 3] = Math.min(165, i * 360);
       }
     }
     octx.putImageData(pixels, 0, 0);
@@ -121,10 +125,10 @@ function paintAurora(t, fade = 1) {
   const sink = (1 - fade) * h * 0.35; // the curtain sags as we climb past it
   ctx.save();
   ctx.globalCompositeOperation = "screen";
-  ctx.globalAlpha = 0.7 * fade;
-  ctx.drawImage(mid, -w * 0.04, -h * 0.03 + sink, w * 1.08, h * 0.8);
-  ctx.globalAlpha = 0.45 * fade;
-  ctx.drawImage(mid, 0, sink, w, h * 0.72);
+  ctx.globalAlpha = 0.62 * fade;
+  ctx.drawImage(mid, -w * 0.04, -h * 0.03 + sink, w * 1.08, h * 0.98);
+  ctx.globalAlpha = 0.38 * fade;
+  ctx.drawImage(mid, 0, sink, w, h * 0.9);
   ctx.restore();
 }
 
