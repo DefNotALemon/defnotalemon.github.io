@@ -19,6 +19,15 @@ export const games = [
     accent: ["#ff3b5c", "#5ef2ff"],
     controls: "keyboard · touch",
   },
+  {
+    id: "tracklayer",
+    title: "Tracklayer",
+    tag: "snowmobile courier · survival",
+    blurb:
+      "Haul supplies out of a ranger station to cabins buried in the backcountry. Fresh powder drags and burns fuel, your own packed trail runs fast and cheap, and the snow keeps filling it back in.",
+    accent: ["#ff5a1f", "#7fc8e0"],
+    controls: "keyboard · gamepad",
+  },
 ];
 
 export const gameUrl = (g) => g.url || `./games/${g.id}/index.html`;
