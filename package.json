@@ -1,5 +1,5 @@
 {
-  "name": "northern-lights",
+  "name": "defnotalemon.github.io",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -10,5 +10,6 @@
   },
   "devDependencies": {
     "vite": "^6.3.5"
-  }
+  },
+  "homepage": "https://defnotalemon.github.io/"
 }
