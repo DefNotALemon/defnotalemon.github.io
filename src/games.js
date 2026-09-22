@@ -28,6 +28,15 @@ export const games = [
     accent: ["#ff5a1f", "#7fc8e0"],
     controls: "keyboard · gamepad",
   },
+  {
+    id: "polybius",
+    title: "Polybius",
+    tag: "vector tube shooter · 1981 legend",
+    blurb:
+      "The cabinet that never existed. Hold the rim of a wireframe tube, shoot what climbs toward you, pass the cognition tests, and try not to notice what it flashes at you.",
+    accent: ["#35f0ff", "#ff3ae0"],
+    controls: "keyboard · touch",
+  },
 ];
 
 export const gameUrl = (g) => g.url || `./games/${g.id}/index.html`;
