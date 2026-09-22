@@ -75,6 +75,7 @@
   #board .row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--frost);background:rgba(234,242,248,.05);border:1px solid var(--line);border-radius:4px;padding:9px 12px;cursor:pointer}
   #board .row:hover,#board .row:focus-visible{border-color:var(--signal);outline:none}
   #board .row.owned{opacity:.5;cursor:default}
+  #board .row kbd.no{opacity:.35}
   #board .row kbd{font-family:var(--display);font-weight:800;border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:1px 7px}
   #board .row .main{display:grid;gap:2px}
   #board .row b{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:.03em}
@@ -83,6 +84,21 @@
   #board .empty{font-size:14px;color:var(--slate);padding:6px 0}
   .bfoot{font-size:12px;color:var(--slate);margin-top:4px}
   .bfoot b{color:var(--frost)}
+  #settings{position:fixed;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;padding:18px;display:grid;gap:8px;background:rgba(13,24,34,.93)}
+  #settings .setrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  #settings label{font-size:13px;color:var(--slate);min-width:4.5em}
+  #settings input[type=range]{flex:1;min-width:140px;accent-color:var(--signal)}
+  #swatches{display:flex;flex-wrap:wrap;gap:8px;flex:1}
+  .sw{width:30px;height:30px;border-radius:5px;border:2px solid transparent;cursor:pointer;padding:0}
+  .sw:hover{border-color:rgba(234,242,248,.5)}
+  .sw.on{border-color:var(--frost);box-shadow:0 0 0 2px rgba(13,24,34,.9) inset}
+  .chip{width:30px;height:30px;border-radius:5px;border:1px solid var(--line)}
+  .sbtn{font:inherit;font-size:14px;color:var(--frost);background:rgba(234,242,248,.06);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer}
+  .sbtn:hover{border-color:var(--signal)}
+  .xbtn{font-size:20px;line-height:1;color:var(--slate);background:none;border:0;cursor:pointer;padding:4px 8px}
+  .xbtn:hover{color:var(--frost)}
+  #settings .hint{font-size:13px;color:var(--slate)}
+  #settings .hint b{color:var(--frost)}
   #black{position:fixed;inset:0;z-index:6;background:#05090d;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadein .8s}
   @keyframes fadein{from{opacity:0}}
   #blackMsg{max-width:44ch;text-align:center;font-size:18px;line-height:1.5;display:grid;gap:10px}
@@ -112,7 +128,7 @@
   <div id="state"><span class="pill" id="pill" data-s="POWDER">POWDER</span><span id="bonus"></span></div>
   <div id="drag"><div id="dragFill"></div></div>
   <div id="dragLbl"><span>Snow drag</span><span id="dragN">0 N</span></div>
-  <div class="gauge"><span class="gl">Fuel</span><div class="bar"><div id="fuelFill"></div></div><span class="gv" id="fuelV">30 L</span></div>
+  <div class="gauge"><span class="gl">Fuel</span><div class="bar"><div id="fuelFill"></div></div><span class="gv" id="fuelV">18 L</span></div>
   <div class="gauge"><span class="gl">Warmth</span><div class="bar"><div id="warmFill"></div></div><span class="gv" id="warmV">100%</span></div>
 </div>
 
@@ -129,7 +145,19 @@
   <div id="jobList"></div>
   <div class="bsec">Sled shop</div>
   <div id="upgList"></div>
-  <div class="bfoot">Press a number or click. <b>E</b> closes. Fragile cargo loses pay on hard hits, and late urgent jobs pay half.</div>
+  <div class="bfoot">Jobs take <b>1</b>–<b>3</b>, the first six upgrades take <b>4</b>–<b>9</b>, or click any row. <b>E</b> closes. Fragile cargo loses pay on hard hits, and late urgent jobs pay half.</div>
+</div>
+
+<div class="panel" id="settings" hidden>
+  <div class="bhead"><div><div class="brand">TRACKLAYER</div><div class="btitle">Settings</div></div><button id="closeSet" class="xbtn" aria-label="Close settings">✕</button></div>
+  <div class="bsec">Sled colour</div>
+  <div class="setrow"><div id="swatches"></div><span id="colorSwatch" class="chip"></span></div>
+  <div class="setrow"><label for="hue">Any hue</label><input id="hue" type="range" min="0" max="360" value="18"></div>
+  <div class="bsec">Sound</div>
+  <div class="setrow"><label for="vol">Volume</label><input id="vol" type="range" min="0" max="100" value="35"><button id="muteBtn" class="sbtn">Sound: on</button></div>
+  <div class="bsec">Camera</div>
+  <div class="setrow"><button id="viewBtn" class="sbtn">View: Chase</button><span class="hint">or press <b>V</b> while riding</span></div>
+  <div class="bfoot"><b>Esc</b> closes. Colour and volume are remembered next time.</div>
 </div>
 
 <div id="black" hidden><div id="blackMsg"></div></div>
@@ -148,7 +176,8 @@
   <div><b>R</b>Reset sled</div>
   <div><b>E</b>Job board (at station)</div>
   <div><b>F</b>Call a tow ($100)</div>
-  <div><b>C</b>Camera · <b style="min-width:0">M</b> Mute · <b style="min-width:0">H</b> Hide</div>
+  <div><b>V</b>Cycle view</div>
+  <div><b>Esc</b>Settings · <b style="min-width:0">M</b> Mute · <b style="min-width:0">H</b> Hide</div>
 </div>
 
 <div class="hud panel" id="flip" hidden>STUCK? PRESS R</div>
@@ -165,6 +194,8 @@
       <span><kbd>Ctrl</kbd>Wheelie</span>
       <span><kbd>R</kbd>Reset</span>
       <span><kbd>E</kbd>Job board</span>
+      <span><kbd>V</kbd>View</span>
+      <span><kbd>Esc</kbd>Settings</span>
       <span><kbd>F</kbd>Tow</span>
       <span>Gamepad works too</span>
     </div>
@@ -199,21 +230,23 @@ function ridged(x, y, o) { let s = 0, a = 0.5, f = 1, n = 0; for (let i = 0; i <
 function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 /* ---------------- world constants ---------------- */
-const WORLD = 2048, HALF = 1024, GRES = 2, GN = WORLD / GRES + 1;   // coarse terrain grid (2 m)
-const CELL = 0.25, FN = WORLD / CELL;                               // fine snow grid (25 cm)
+const WORLD = 4096, HALF = 2048, GRES = 2, GN = WORLD / GRES + 1;   // coarse terrain grid (2 m)
+const CELL = 0.25, FN = WORLD / CELL;   // 16384 fine cells per side                               // fine snow grid (25 cm)
 const ground = new Float32Array(GN * GN), freshG = new Float32Array(GN * GN), bio = new Uint8Array(GN * GN); // bio: 0 open, 1 ice, 2 forest
 const LAKES = [
-  { x: 150, z: 430, r: 175 }, { x: -410, z: 150, r: 125 }, { x: 450, z: -40, r: 115 },
-  { x: -170, z: 660, r: 140 }, { x: -540, z: -300, r: 85 }, { x: 610, z: 520, r: 95 }
+  { x: 300, z: 860, r: 330 }, { x: -820, z: 300, r: 250 }, { x: 900, z: -80, r: 215 },
+  { x: -340, z: 1320, r: 265 }, { x: -1080, z: -600, r: 150 }, { x: 1220, z: 1040, r: 190 },
+  { x: 1500, z: 1560, r: 240 }, { x: -1560, z: 1180, r: 205 }, { x: 260, z: 1720, r: 180 },
+  { x: -1420, z: -260, r: 130 }, { x: 1680, z: 420, r: 150 }
 ];
 const SPAWN = { x: -30, z: 200, yaw: Math.PI * 0.92 };
 
 function baseH(x, z) {
-  let h = 18 + (fbm(x / 280 + 11, z / 280 - 7, 4) - 0.5) * 44 + (fbm(x / 70, z / 70, 2) - 0.5) * 6;
-  const m = sstep(120, -540, z);
-  if (m > 0) { const r = ridged(x / 380 + 3.1, z / 380 - 1.7, 5); h += m * (35 + Math.pow(r, 1.7) * 260); }
-  const e = sstep(760, 1000, Math.max(Math.abs(x), Math.abs(z)));
-  if (e > 0) h += e * (60 + ridged(x / 200, z / 200, 3) * 170);
+  let h = 18 + (fbm(x / 520 + 11, z / 520 - 7, 4) - 0.5) * 52 + (fbm(x / 120, z / 120, 3) - 0.5) * 14 + (fbm(x / 40, z / 40, 2) - 0.5) * 4;
+  const m = sstep(240, -1080, z);
+  if (m > 0) { const r = ridged(x / 700 + 3.1, z / 700 - 1.7, 5); h += m * (35 + Math.pow(r, 1.7) * 300); }
+  const e = sstep(1560, 2010, Math.max(Math.abs(x), Math.abs(z)));
+  if (e > 0) h += e * (70 + ridged(x / 320, z / 320, 3) * 190);
   return h;
 }
 function sampleG(arr, x, z) {
@@ -240,7 +273,7 @@ function genWorld() {
       for (const L of LAKES) {
         const dx = x - L.x, dz = z - L.z, dd = Math.sqrt(dx * dx + dz * dz);
         if (dd > L.r * 1.7) continue;
-        const t = dd / (L.r * (0.76 + 0.48 * fbm(x / 110 + L.x, z / 110, 3)));
+        const t = dd / (L.r * (0.76 + 0.48 * fbm(x / 170 + L.x, z / 170, 3)));
         const mk = 1 - sstep(0.92, 1.3, t);
         h += (L.lv - h) * mk;
         if (t < 0.97) ice = 1;
@@ -261,8 +294,8 @@ function genWorld() {
       else {
         d = 0.5 + 0.38 * sstep(50, 170, h);
         d *= 1 - sstep(0.62, 1.0, s);
-        const fd = fbm(x / 170 + 40, z / 170 - 3, 3);
-        if (fd > 0.5 && h < 165 && s < 0.5) { bio[k] = 2; d *= 0.86; }
+        const fd = fbm(x / 300 + 40, z / 300 - 3, 3);
+        if (fd > 0.5 && h < 175 && s < 0.5) { bio[k] = 2; d *= 0.86; }
       }
       freshG[k] = d;
     }
@@ -323,7 +356,7 @@ const scene = new THREE.Scene();
 const FOG = new THREE.Color(0xc4d3e2);
 scene.fog = new THREE.FogExp2(FOG, 0.0017);
 scene.background = FOG;
-const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 6000);
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 12000);
 
 const sunDir = new THREE.Vector3(-0.55, 0.3, 0.78).normalize();
 const hemi = new THREE.HemisphereLight(0xbcd4ec, 0xe9eef5, 0.62); scene.add(hemi);
@@ -335,7 +368,7 @@ sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
 
 // sky dome
-const sky = new THREE.Mesh(new THREE.SphereGeometry(4000, 32, 16), new THREE.ShaderMaterial({
+const sky = new THREE.Mesh(new THREE.SphereGeometry(8000, 32, 16), new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false,
   uniforms: { uSun: { value: sunDir }, uDay: { value: 1 }, uStorm: { value: 0 }, uFog: { value: new THREE.Color(0xc4d3e2) } },
   vertexShader: "varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
@@ -455,20 +488,20 @@ function writeCell(ix, iz, oldD, newD, f) {
 }
 
 /* ---------------- trail map (far terrain tint + minimap) ---------------- */
-const TR = 512, trailData = new Uint8Array(TR * TR * 4);
+const TR = 1024, trailData = new Uint8Array(TR * TR * 4);
 const trailTex = new THREE.DataTexture(trailData, TR, TR, THREE.RGBAFormat);
 trailTex.magFilter = THREE.LinearFilter; trailTex.minFilter = THREE.LinearFilter;
 farU.uTrail.value = trailTex;
 let trailDirty = false, trailClock = 0;
 function markTrail(x, z) {
-  const tx = clamp(((x + HALF) / 4) | 0, 0, TR - 1), tz = clamp(((z + HALF) / 4) | 0, 0, TR - 1), o = (tz * TR + tx) * 4;
+  const tx = clamp(((x + HALF) / (WORLD / TR)) | 0, 0, TR - 1), tz = clamp(((z + HALF) / (WORLD / TR)) | 0, 0, TR - 1), o = (tz * TR + tx) * 4;
   if (trailData[o] < 255) { trailData[o] = 255; trailDirty = true; }
 }
 
 /* ---------------- boot ---------------- */
 let far, capMesh, treeMesh, cargoMesh = null, started = false, ready = false;
 const obGrid = new Map(); const OBC = 16;
-function addOb(o) { const k = Math.floor((o.z + HALF) / OBC) * 200 + Math.floor((o.x + HALF) / OBC); let a = obGrid.get(k); if (!a) obGrid.set(k, a = []); a.push(o); }
+function addOb(o) { const k = Math.floor((o.z + HALF) / OBC) * 512 + Math.floor((o.x + HALF) / OBC); let a = obGrid.get(k); if (!a) obGrid.set(k, a = []); a.push(o); }
 
 function mergeGeos(list) {
   let n = 0; for (const g of list) n += g.attributes.position.count;
@@ -485,7 +518,7 @@ function paint(geo, fn) {
 }
 
 function buildFar() {
-  const step = 2, n = (GN - 1) / step + 1;
+  const step = 4, n = (GN - 1) / step + 1;   // 8 m far-terrain grid
   const pos = new Float32Array(n * n * 3), col = new Float32Array(n * n * 3);
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
     const gi = i * step, gj = j * step, k = gj * GN + gi, v = j * n + i;
@@ -511,7 +544,7 @@ function buildFar() {
         bool deep = position.x > uPatch.x + 5.0 && position.x < uPatch.z - 5.0 && position.z > uPatch.y + 5.0 && position.z < uPatch.w - 5.0;
         transformed.y -= deep ? 30.0 : 1.3; }`);
     sh.fragmentShader = "uniform sampler2D uTrail; varying vec2 vWxz;\n" + sh.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
-      float tr = texture2D(uTrail, (vWxz + 1024.0) / 2048.0).r;
+      float tr = texture2D(uTrail, (vWxz + 2048.0) / 4096.0).r;
       diffuseColor.rgb *= mix(vec3(1.0), vec3(0.76,0.82,0.9), tr);`);
   };
   far = new THREE.Mesh(geo, mat); far.receiveShadow = false;
@@ -574,15 +607,15 @@ function buildProps() {
   });
   const treeGeo = mergeGeos(parts), capGeo = mergeGeos(caps);
   const trees = [];
-  for (let n = 0; n < 90000 && trees.length < 10000; n++) {
-    const x = (rnd() * 2 - 1) * 990, z = (rnd() * 2 - 1) * 990;
+  for (let n = 0; n < 260000 && trees.length < 17000; n++) {
+    const x = (rnd() * 2 - 1) * 2000, z = (rnd() * 2 - 1) * 2000;
     const b = bioAt(x, z); if (b === 1) continue;
-    const h = groundAt(x, z); if (h > 175) continue;
+    const h = groundAt(x, z); if (h > 185) continue;
     const s = Math.hypot(groundAt(x + 2, z) - groundAt(x - 2, z), groundAt(x, z + 2) - groundAt(x, z - 2)) / 4;
     if (s > 0.55) continue;
     const lake = LAKES.some(L => Math.hypot(x - L.x, z - L.z) < L.r * 1.02 && bioAt(x, z) !== 0);
     if (lake) continue;
-    if (b === 2) { const fd = fbm(x / 170 + 40, z / 170 - 3, 3); if (rnd() > (fd - 0.5) * 7) continue; }
+    if (b === 2) { const fd = fbm(x / 300 + 40, z / 300 - 3, 3); if (rnd() > (fd - 0.5) * 7) continue; }
     else if (rnd() > 0.035) continue;
     if (nearSite(x, z, 24)) continue;
     trees.push([x, z, 0.75 + rnd() * 0.75]);
@@ -603,8 +636,8 @@ function buildProps() {
   const rockGeo = paint(new THREE.IcosahedronGeometry(1, 0), (x, y, z, ny) => ny > 0.45 ? [0.9, 0.93, 0.98] : [0.32, 0.31, 0.33]);
   rockGeo.computeVertexNormals();
   const rocks = [];
-  for (let n = 0; n < 30000 && rocks.length < 900; n++) {
-    const x = (rnd() * 2 - 1) * 990, z = (rnd() * 2 - 1) * 990;
+  for (let n = 0; n < 90000 && rocks.length < 1600; n++) {
+    const x = (rnd() * 2 - 1) * 2000, z = (rnd() * 2 - 1) * 2000;
     if (bioAt(x, z) === 1) continue;
     const h = groundAt(x, z), want = h > 70 ? 0.25 : 0.03;
     if (rnd() > want || nearSite(x, z, 24)) continue;
@@ -622,8 +655,8 @@ function buildProps() {
   // fallen logs
   const logGeo = paint(new THREE.CylinderGeometry(0.34, 0.38, 1, 8).rotateZ(Math.PI / 2), (x, y, z, ny) => ny > 0.55 ? [0.9, 0.93, 0.98] : [0.28, 0.2, 0.15]);
   const logs = [];
-  for (let n = 0; n < 40000 && logs.length < 260; n++) {
-    const x = (rnd() * 2 - 1) * 980, z = (rnd() * 2 - 1) * 980;
+  for (let n = 0; n < 120000 && logs.length < 420; n++) {
+    const x = (rnd() * 2 - 1) * 1990, z = (rnd() * 2 - 1) * 1990;
     if (bioAt(x, z) !== 2 || nearSite(x, z, 30)) continue;
     logs.push([x, z, 4 + rnd() * 5, rnd() * Math.PI]);
   }
@@ -639,11 +672,13 @@ function buildProps() {
 
 /* ---------------- sled ---------------- */
 const sledRoot = new THREE.Group(), sledBody = new THREE.Group(), skiPivots = [], barPivot = new THREE.Group();
+let bodyMat = null;
 sledRoot.add(sledBody); scene.add(sledRoot);
 sledRoot.rotation.order = "YXZ";
 (function buildSled() {
   const std = (c, r = 0.6, m = 0.05, extra) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m }, extra || {}));
-  const orange = std(0xff5a1f, 0.42, 0.1), dark = std(0x1a2027, 0.85), black = std(0x0c0f12, 0.95), steel = std(0x9aa6b2, 0.35, 0.6), navy = std(0x1c2c44, 0.8);
+  bodyMat = std(0xff5a1f, 0.42, 0.1);
+  const orange = bodyMat, dark = std(0x1a2027, 0.85), black = std(0x0c0f12, 0.95), steel = std(0x9aa6b2, 0.35, 0.6), navy = std(0x1c2c44, 0.8);
   const glass = std(0x9fc4dc, 0.1, 0.1, { transparent: true, opacity: 0.45 });
   const box = (w, h, d, mat, x, y, z, rx = 0, parent = sledBody) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; parent.add(m); return m; };
   box(0.5, 0.24, 2.0, black, 0, 0.13, -0.55);          // track
@@ -755,6 +790,7 @@ function updFlakes(dt) {
 const keys = new Set();
 const input = { thr: 0, brk: 0, steer: 0, lean: 0, hop: false, wheelie: 0 };
 let camMode = 0, muted = false;
+const VIEWS = [{ n: "Chase", d: 7.8, h: 3.2, f: 60 }, { n: "Close chase", d: 4.6, h: 2.0, f: 62 }, { n: "First person", fp: true, f: 72 }, { n: "Drone", d: 16, h: 9, f: 52 }];
 addEventListener("keydown", e => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code) || (started && e.ctrlKey && !e.metaKey)) e.preventDefault();
   if (e.repeat) return;
@@ -762,14 +798,15 @@ addEventListener("keydown", e => {
   if (!started) return;
   if (e.code === "Space") input.hop = true;
   if (e.code === "KeyR") resetSled();
-  if (e.code === "KeyC") camMode = (camMode + 1) % 2;
-  if (e.code === "KeyM") { muted = !muted; if (audio) audio.master.gain.value = muted ? 0 : 0.35; }
+  if (e.code === "KeyV" || e.code === "KeyC") cycleView();
+  if (e.code === "KeyM") { muted = !muted; applySettings(); toast(muted ? "Muted" : "Sound on"); }
   if (e.code === "KeyH") $("help").hidden = !$("help").hidden;
   gameKey(e);
 });
 addEventListener("keyup", e => keys.delete(e.code));
 addEventListener("blur", () => keys.clear());
-let padHop = false, padReset = false;
+let padHop = false, padReset = false, padView = false;
+function cycleView() { camMode = (camMode + 1) % VIEWS.length; camState.init = false; toast(VIEWS[camMode].n + " view"); }
 function readInput(dt) {
   let thr = (keys.has("KeyW") || keys.has("ArrowUp")) ? 1 : 0, brk = (keys.has("KeyS") || keys.has("ArrowDown")) ? 1 : 0;
   let st = ((keys.has("KeyD") || keys.has("ArrowRight")) ? 1 : 0) - ((keys.has("KeyA") || keys.has("ArrowLeft")) ? 1 : 0);
@@ -783,6 +820,7 @@ function readInput(dt) {
     if (gp.buttons[2] && gp.buttons[2].pressed) wh = 1;
     const h = gp.buttons[0] && gp.buttons[0].pressed; if (h && !padHop && started) input.hop = true; padHop = h;
     const r = gp.buttons[3] && gp.buttons[3].pressed; if (r && !padReset && started) resetSled(); padReset = r;
+    const v = gp.buttons[11] && gp.buttons[11].pressed; if (v && !padView && started) cycleView(); padView = v;
     break;
   }
   input.wheelie = wh; if (wh) thr = Math.max(thr, 1);
@@ -911,7 +949,7 @@ function collide(fx, fz) {
     const cx = P.x + fx * off, cz = P.z + fz * off;
     const gx = Math.floor((cx + HALF) / OBC), gz = Math.floor((cz + HALF) / OBC);
     for (let j = gz - 1; j <= gz + 1; j++) for (let i = gx - 1; i <= gx + 1; i++) {
-      const a = obGrid.get(j * 200 + i); if (!a) continue;
+      const a = obGrid.get(j * 512 + i); if (!a) continue;
       for (const o of a) {
         if (P.y > o.top - 0.12) continue;
         const dx = cx - o.x, dz = cz - o.z, d2 = dx * dx + dz * dz, rr = r + o.r;
@@ -938,7 +976,7 @@ function collide(fx, fz) {
       }
     }
   }
-  const lim = 1000; P.x = clamp(P.x, -lim, lim); P.z = clamp(P.z, -lim, lim);
+  const lim = HALF - 24; P.x = clamp(P.x, -lim, lim); P.z = clamp(P.z, -lim, lim);
 }
 let sprayAcc = 0;
 function physStep(dt) {
@@ -957,7 +995,7 @@ function physStep(dt) {
   const spf = clamp(Math.abs(vf) / 5, 0, 1) / (1 + Math.abs(vf) / 45);
   // wheelie: skis come up off the snow, track does all the work
   const thrE = GS.fuel > 0 && !GS.dead ? input.thr : 0;
-  if (started && !GS.dead) GS.fuel = Math.max(0, GS.fuel - (0.004 + thrE * (0.024 + 0.42 * exc) * (GS.up.engine ? 1.15 : 1)) * dt);
+  if (started && !GS.dead) GS.fuel = Math.max(0, GS.fuel - (0.003 + thrE * (0.018 + 0.3 * exc) * (GS.up.engine ? 1.18 : 1)) * dt);
   const whOn = input.wheelie && GS.fuel > 0 && (gnd ? Math.abs(vf) > 2.5 : P.wh > 0.3);
   P.wh = clamp(P.wh + (whOn ? 2.4 : -3.2) * dt, 0, 1);
   if (P.wh > 0.7 && gnd) { P.whRun += Math.abs(vf) * dt; if (P.whRun > P.whBest) P.whBest = P.whRun; }
@@ -974,10 +1012,10 @@ function physStep(dt) {
     if (input.brk > 0) F -= (vf > 0.6 ? 4200 : 1100) * input.brk;
     vx += F / MASS * fx * dt; vz += F / MASS * fz * dt;
     const sp = Math.hypot(vx, vz);
-    P.drag = 5600 * exc;
+    P.drag = 5600 * exc * (GS.up.paddle ? 0.75 : 1);
     const Fs = P.drag + (P.ice ? 140 : lerp(260, 60, P.rock)) + 0.9 * sp * sp;
     if (sp > 0.01) { const dv = Math.min(sp, Fs / MASS * dt); vx -= vx / sp * dv; vz -= vz / sp * dv; }
-    const grip = lerp(P.ice ? 1.2 : lerp(5.5, 9, P.pack), 0.8, P.rock) * lerp(1, 0.75, P.wh);
+    const grip = lerp(P.ice ? 1.2 : lerp(5.5, 9, P.pack) + (GS.up.paddle ? 1.6 : 0), 0.8, P.rock) * lerp(1, 0.75, P.wh);
     const vl = vx * lx + vz * lz, nvl = vl * Math.exp(-grip * dt); vx += (nvl - vl) * lx; vz += (nvl - vl) * lz;
     // spray
     const spd = Math.hypot(vx, vz);
@@ -998,7 +1036,7 @@ function physStep(dt) {
   const hs2 = surf(P.x, P.z), sv = vx * gx + vz * gz;
   if (P.y <= hs2) {
     const impact = sv - P.vy; P.y = hs2;
-    if (P.vy < sv) { if (!P.gnd && impact > 4.5) { cargoHit(impact); crater(P.x, P.z, Math.min(0.45, impact * 0.045)); P.shake = Math.min(1, impact / 12); thud(Math.min(1, impact / 14)); } P.vy = sv; }
+    if (P.vy < sv) { if (!P.gnd && impact > 4.5) { cargoHit(impact); crater(P.x, P.z, Math.min(0.45, impact * 0.045)); P.shake = Math.min(1, impact / 12) * (GS.up.susp ? 0.6 : 1); thud(Math.min(1, impact / 14)); } P.vy = sv; }
   }
   P.gnd = P.y <= hs2 + 0.12;
   collide(fx, fz);
@@ -1010,7 +1048,7 @@ let audio = null;
 function initAudio() {
   try {
     const AC = new (window.AudioContext || window.webkitAudioContext)();
-    const master = AC.createGain(); master.gain.value = 0.35; master.connect(AC.destination);
+    const master = AC.createGain(); master.gain.value = muted ? 0 : SET.vol; master.connect(AC.destination);
     const o1 = AC.createOscillator(), o2 = AC.createOscillator(); o1.type = "sawtooth"; o2.type = "square";
     const lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 500; lp.Q.value = 2;
     const eg = AC.createGain(); eg.gain.value = 0;
@@ -1089,6 +1127,7 @@ function markMap() {
 
 /* ---------------- visuals / camera / hud ---------------- */
 const camState = { yaw: SPAWN.yaw, init: false };
+const _camEye = new THREE.Vector3(), _camAim = new THREE.Vector3(), _camWant = new THREE.Vector3();
 let hudT = 0, safeT = 0;
 function angLerp(a, b, t) { let d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * t; }
 function updVisuals(dt) {
@@ -1118,20 +1157,30 @@ function updVisuals(dt) {
   const rpmT = clamp(0.14 + input.thr * 0.35 + spd / 34 * 0.55 + (input.thr && !P.gnd ? 0.3 : 0), 0, 1.15);
   P.rpm += (rpmT - P.rpm) * (1 - Math.exp(-4 * dt));
   // camera
-  const dist = camMode ? 4.6 : 7.8, hgt = camMode ? 2.0 : 3.2;
+  const view = VIEWS[camMode];
   const velYaw = spd > 3 ? Math.atan2(P.vx, P.vz) : P.yaw;
   camState.yaw = angLerp(camState.yaw, angLerp(P.yaw, velYaw, 0.35), 1 - Math.exp(-3.5 * dt));
   const cfx = Math.sin(camState.yaw), cfz = Math.cos(camState.yaw);
-  const want = new THREE.Vector3(P.x - cfx * dist, P.y + hgt, P.z - cfz * dist);
-  want.y = Math.max(want.y, surf(want.x, want.z) + 1.3);
-  if (!camState.init) { camera.position.copy(want); camState.init = true; }
-  else camera.position.lerp(want, 1 - Math.exp(-6 * dt));
-  camera.position.y = Math.max(camera.position.y, surf(camera.position.x, camera.position.z) + 1.0);
+  let look;
+  if (view.fp) {
+    const eye = sledRoot.localToWorld(_camEye.set(0, 1.52, 0.42));
+    look = sledRoot.localToWorld(_camAim.set(0, 1.25, 16));
+    if (!camState.init) { camera.position.copy(eye); camState.init = true; }
+    else camera.position.lerp(eye, 1 - Math.exp(-22 * dt));
+    camera.position.y = Math.max(camera.position.y, surf(camera.position.x, camera.position.z) + 0.5);
+  } else {
+    const want = _camWant.set(P.x - cfx * view.d, P.y + view.h, P.z - cfz * view.d);
+    want.y = Math.max(want.y, surf(want.x, want.z) + 1.3);
+    if (!camState.init) { camera.position.copy(want); camState.init = true; }
+    else camera.position.lerp(want, 1 - Math.exp(-6 * dt));
+    camera.position.y = Math.max(camera.position.y, surf(camera.position.x, camera.position.z) + 1.0);
+    look = _camAim.set(P.x + cfx * 4, P.y + 1.1, P.z + cfz * 4);
+  }
   P.shake *= Math.exp(-4 * dt);
-  const sh = P.shake * 0.35 + (P.gnd ? clamp(spd / 40, 0, 1) * 0.015 * (1 - P.pack) : 0);
+  const sh = (P.shake * 0.35 + (P.gnd ? clamp(spd / 40, 0, 1) * 0.015 * (1 - P.pack) : 0)) * (view.fp ? 0.5 : 1);
   camera.position.x += (Math.random() - 0.5) * sh; camera.position.y += (Math.random() - 0.5) * sh;
-  camera.lookAt(P.x + cfx * 4, P.y + 1.1, P.z + cfz * 4);
-  const fov = 60 + Math.min(16, spd * 0.4);
+  camera.lookAt(look);
+  const fov = view.f + Math.min(16, spd * 0.4);
   if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * (1 - Math.exp(-3 * dt)); camera.updateProjectionMatrix(); }
   sky.position.copy(camera.position);
   sun.position.set(P.x + sunDir.x * 200, P.y + sunDir.y * 200, P.z + sunDir.z * 200); sun.target.position.set(P.x, P.y, P.z);
@@ -1164,16 +1213,18 @@ function updHud(spd) {
 /* ---------------- courier survival layer ---------------- */
 const GAMEHOUR = 30;                       // real seconds per in-game hour (a full day is 12 minutes)
 const GS = {
-  cash: 0, fuel: 30, cap: 30, warmth: 100, hour: 7.4, job: null, jobs: [], up: {}, delivered: 0, hits: 0,
+  cash: 0, fuel: 18, cap: 18, warmth: 100, hour: 7.4, job: null, jobs: [], up: {}, delivered: 0, hits: 0,
   storm: 0, stormT: 170, stormPhase: "calm", warned: false, boardOpen: false, dead: false, near: null,
   outWarned: false, coldWarned: false, lowWarned: false, smokeT: 0, fadeT: 0
 };
 const SITES = [
-  { id: "depot", name: "Hollis Ranger Station", seed: [-20, 240], type: "depot" },
-  { id: "loon", name: "Loon Shore Cabin", seed: [350, 470], type: "cabin" },
-  { id: "deadfall", name: "Deadfall Cabin", seed: [-630, 430], type: "cabin" },
-  { id: "frost", name: "Frost Hollow Hut", seed: [660, 160], type: "cabin" },
-  { id: "ridge", name: "Ridgeback Hut", seed: [-260, -360], type: "cabin" },
+  { id: "depot", name: "Hollis Ranger Station", seed: [-40, 420], type: "depot" },
+  { id: "loon", name: "Loon Shore Cabin", seed: [760, 1080], type: "cabin" },
+  { id: "deadfall", name: "Deadfall Cabin", seed: [-1300, 900], type: "cabin" },
+  { id: "frost", name: "Frost Hollow Hut", seed: [1340, 260], type: "cabin" },
+  { id: "ridge", name: "Ridgeback Hut", seed: [-560, -760], type: "cabin" },
+  { id: "spruce", name: "Spruce Creek Camp", seed: [420, 1720], type: "cabin" },
+  { id: "granite", name: "Granite Bend Cabin", seed: [-1680, -180], type: "cabin" },
   { id: "relay", name: "Summit Relay", seed: null, type: "relay" }
 ];
 let depot = SITES[0];
@@ -1184,9 +1235,15 @@ const CARGO = [
 ];
 const BACKHAUL = ["Outgoing mail", "Empty propane tanks", "Trail report", "Broken radio", "Pelts for trade"];
 const UPG = [
-  { id: "tank", name: "Long-range tank", desc: "Fuel 30 L → 45 L", cost: 180 },
+  { id: "tank", name: "Long-range tank", desc: "Fuel 18 L → 28 L", cost: 170 },
+  { id: "cans", name: "Strapped jerry cans", desc: "+12 L more (needs the tank)", cost: 240, needs: "tank" },
   { id: "suit", name: "Expedition suit", desc: "Cold drains 35% slower", cost: 150 },
-  { id: "engine", name: "Big-bore engine", desc: "+25% power, burns a bit more", cost: 320 }
+  { id: "grips", name: "Heated grips & visor", desc: "Another 20% off the cold", cost: 120 },
+  { id: "engine", name: "Big-bore engine", desc: "+25% power, a little thirstier", cost: 320 },
+  { id: "paddle", name: "Deep-snow paddle track", desc: "25% less drag in powder, more bite", cost: 280 },
+  { id: "susp", name: "Long-travel suspension", desc: "Soaks up landings, cargo survives hits", cost: 210 },
+  { id: "lights", name: "LED light bar", desc: "Far brighter, wider night riding", cost: 90 },
+  { id: "box", name: "Insulated cargo box", desc: "Fragile damage costs half as much", cost: 160 }
 ];
 
 function slopeAt(x, z, e) { return Math.hypot(groundAt(x + e, z) - groundAt(x - e, z), groundAt(x, z + e) - groundAt(x, z - e)) / (2 * e); }
@@ -1194,7 +1251,7 @@ function flatSpot(sx, sz, R) {
   let best = [sx, sz], bs = 1e9;
   for (let k = 0; k < 500; k++) {
     const a = k * 2.399, r = Math.sqrt(k / 500) * R, x = sx + Math.cos(a) * r, z = sz + Math.sin(a) * r;
-    if (Math.abs(x) > 900 || Math.abs(z) > 900) continue;
+    if (Math.abs(x) > 1960 || Math.abs(z) > 1960) continue;
     if (bioAt(x, z) === 1 || bioAt(x - 11, z) === 1) continue;
     const sc = slopeAt(x, z, 6) + slopeAt(x - 11, z, 6) + r * 0.0015;
     if (sc < bs) { bs = sc; best = [x, z]; }
@@ -1205,7 +1262,7 @@ function computeSites() {
   for (const s of SITES) {
     if (s.type === "relay") {
       let best = null, bh = -1e9;
-      for (let z = -720; z <= -420; z += 12) for (let x = -600; x <= 600; x += 12) {
+      for (let z = -1500; z <= -880; z += 16) for (let x = -1300; x <= 1300; x += 16) {
         const h = groundAt(x, z); if (h < bh || slopeAt(x, z, 6) > 0.3 || slopeAt(x - 11, z, 6) > 0.35) continue;
         bh = h; best = [x, z];
       }
@@ -1218,7 +1275,7 @@ function computeSites() {
 }
 function nearSite(x, z, r) { return SITES.some(s => s.x !== undefined && (Math.hypot(x - s.x, z - s.z) < r || Math.hypot(x - s.x + 11, z - s.z) < r)); }
 
-const beaconGeo = new THREE.CylinderGeometry(1.6, 1.6, 700, 16, 1, true);
+const beaconGeo = new THREE.CylinderGeometry(2.2, 2.2, 1000, 16, 1, true);
 function buildSites() {
   const L = c => new THREE.MeshLambertMaterial({ color: c });
   const wood = L(0x5b3d29), woodD = L(0x3a271b), snowM = L(0xf3f7fc), stone = L(0x6b6c70), doorM = L(0x2a1b12), pumpM = L(0xc23a22), metal = L(0x8d99a6);
@@ -1263,14 +1320,14 @@ function buildSites() {
     scene.add(g);
     const bc = s.type === "depot" ? 0x7fc8e0 : 0xff5a1f;
     s.beacon = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({ color: bc, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide }));
-    s.beacon.position.set(s.x, s.y + 340, s.z); s.beacon.visible = false; scene.add(s.beacon);
+    s.beacon.position.set(s.x, s.y + 480, s.z); s.beacon.visible = false; scene.add(s.beacon);
   }
 }
 
 /* night sky + headlight */
 const starGeo = new THREE.BufferGeometry(); {
   const n = 1600, a = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) { const u = Math.random() * 6.283, v = Math.acos(Math.random() * 0.95); a[i * 3] = Math.sin(v) * Math.cos(u) * 3500; a[i * 3 + 1] = Math.cos(v) * 3500; a[i * 3 + 2] = Math.sin(v) * Math.sin(u) * 3500; }
+  for (let i = 0; i < n; i++) { const u = Math.random() * 6.283, v = Math.acos(Math.random() * 0.95); a[i * 3] = Math.sin(v) * Math.cos(u) * 7000; a[i * 3 + 1] = Math.cos(v) * 7000; a[i * 3 + 2] = Math.sin(v) * Math.sin(u) * 7000; }
   starGeo.setAttribute("position", new THREE.BufferAttribute(a, 3));
 }
 const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 1.8, sizeAttenuation: false, color: 0xffffff, transparent: true, opacity: 0, fog: false, depthWrite: false }));
@@ -1296,7 +1353,8 @@ function updSky() {
   sky.material.uniforms.uDay.value = day; sky.material.uniforms.uStorm.value = st; sky.material.uniforms.uFog.value.copy(_c1);
   renderer.toneMappingExposure = lerp(0.9, 1.05, day);
   stars.material.opacity = (1 - day) * (1 - st) * 0.9; stars.position.copy(camera.position);
-  headlight.intensity = GS.fuel > 0 ? lerp(3.2, 0.3, day) : 0;
+  headlight.intensity = GS.fuel > 0 ? lerp(3.2, 0.3, day) * (GS.up.lights ? 1.8 : 1) : 0;
+  headlight.distance = GS.up.lights ? 150 : 80; headlight.angle = GS.up.lights ? 0.75 : 0.55;
 }
 
 /* snowfall fills old tracks back in */
@@ -1331,7 +1389,7 @@ function fadeTrails(dt) {
 const fmtTime = h => { const hh = Math.floor(h % 24), mm = Math.floor((h % 1) * 60); return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0"); };
 const fmtMi = m => (m / 1609).toFixed(m < 1609 ? 2 : 1) + " mi";
 function makeJobs(from) {
-  const pool = SITES.filter(s => s.type !== "depot").sort(() => Math.random() - 0.5);
+  const pool = SITES.filter(s => s.type !== "depot").sort(() => Math.random() - 0.5);  // seven destinations, three posted
   GS.jobs = [];
   for (let k = 0; k < 3; k++) {
     const d = pool[k], cg = CARGO[(Math.random() * CARGO.length) | 0];
@@ -1349,19 +1407,20 @@ function acceptJob(k) {
 }
 function buyUpg(k) {
   const u = UPG[k]; if (!u || GS.up[u.id]) return;
+  if (u.needs && !GS.up[u.needs]) { toast(`${u.name} needs the ${UPG.find(x => x.id === u.needs).name.toLowerCase()} first.`, "warn"); return; }
   if (GS.cash < u.cost) { toast(`${u.name} costs $${u.cost}. You have $${GS.cash}.`, "warn"); return; }
-  GS.cash -= u.cost; GS.up[u.id] = true; applyUpg(); if (u.id === "tank") GS.fuel = GS.cap;
+  GS.cash -= u.cost; GS.up[u.id] = true; applyUpg(); if (u.id === "tank" || u.id === "cans") GS.fuel = GS.cap;
   toast(`Installed: ${u.name}.`); renderBoard(); save();
 }
-function applyUpg() { GS.cap = GS.up.tank ? 45 : 30; GS.fuel = Math.min(GS.fuel, GS.cap); }
+function applyUpg() { GS.cap = 18 + (GS.up.tank ? 10 : 0) + (GS.up.cans ? 12 : 0); GS.fuel = Math.min(GS.fuel, GS.cap); }
 function cargoHit(v) {
-  if (!GS.job || !GS.job.fragile || v < 6) return;
-  GS.hits++; toast(`Cargo rattled. Pay −15% (${GS.hits} hit${GS.hits > 1 ? "s" : ""}).`, "warn");
+  if (!GS.job || !GS.job.fragile || v < (GS.up.susp ? 9 : 6)) return;
+  GS.hits++; toast(`Cargo rattled. Pay −${GS.up.box ? "7.5" : "15"}% (${GS.hits} hit${GS.hits > 1 ? "s" : ""}).`, "warn");
 }
 function deliver() {
   const j = GS.job, s = j.dest;
   let p = j.pay; const notes = [];
-  if (j.fragile && GS.hits) { p *= Math.max(0.3, 1 - 0.15 * GS.hits); notes.push("damaged"); }
+  if (j.fragile && GS.hits) { p *= Math.max(0.3, 1 - (GS.up.box ? 0.075 : 0.15) * GS.hits); notes.push("damaged"); }
   if (j.due && GS.hour > j.due) { p *= 0.5; notes.push("late"); }
   p = Math.round(p); GS.cash += p; GS.delivered++; GS.job = null;
   toast(`Delivered to ${s.name}: +$${p}${notes.length ? " (" + notes.join(", ") + ")" : ""}`, "good");
@@ -1411,7 +1470,7 @@ function renderBoard() {
   const ul = $("upgList"); ul.innerHTML = "";
   UPG.forEach((u, k) => {
     const b = document.createElement("button"); b.className = "row" + (GS.up[u.id] ? " owned" : ""); b.id = "upgBtn" + k;
-    b.innerHTML = `<kbd>${k + 4}</kbd><span class="main"><b>${u.name}</b><em>${u.desc}</em></span><span class="pay">${GS.up[u.id] ? "Owned" : "$" + u.cost}</span>`;
+    b.innerHTML = `${k < 6 ? "<kbd>" + (k + 4) + "</kbd>" : "<kbd class='no'>·</kbd>"}<span class="main"><b>${u.name}</b><em>${u.desc}</em></span><span class="pay">${GS.up[u.id] ? "Owned" : "$" + u.cost}</span>`;
     b.addEventListener("click", () => buyUpg(k)); ul.appendChild(b);
   });
   $("boardCash").textContent = "$" + GS.cash;
@@ -1421,9 +1480,43 @@ function closeBoard() { GS.boardOpen = false; $("board").hidden = true; }
 function gameKey(e) {
   if (GS.dead) return;
   if (e.code === "KeyE") { if (GS.boardOpen) closeBoard(); else if (GS.near === depot) openBoard(); else toast("The job board is at Hollis Ranger Station.", "warn"); }
-  if (e.code === "Escape") closeBoard();
+  if (e.code === "Escape") { if (GS.boardOpen) closeBoard(); else toggleSettings(); }
   if (e.code === "KeyF") { if (GS.near === depot) toast("You're already at the station."); else blackout("tow"); }
-  if (GS.boardOpen && /^Digit[1-6]$/.test(e.code)) { const k = +e.code.slice(5) - 1; if (k < 3) acceptJob(k); else buyUpg(k - 3); }
+  if (GS.boardOpen && /^Digit[1-9]$/.test(e.code)) { const k = +e.code.slice(5) - 1; if (k < 3) acceptJob(k); else buyUpg(k - 3); }
+}
+
+/* settings: sled colour, volume */
+const SLED_COLORS = ["#ff5a1f", "#ffd23f", "#4fd06a", "#38b6ff", "#9b6bff", "#ff4d8d", "#f2f6fb", "#20262e", "#b5651d", "#00e0c6"];
+const SET = { color: "#ff5a1f", vol: 0.35, hud: true };
+function loadSettings() { try { const d = JSON.parse(localStorage.getItem("tracklayer.set.v1") || "null"); if (d) Object.assign(SET, d); } catch (e) { } }
+function saveSettings() { try { localStorage.setItem("tracklayer.set.v1", JSON.stringify(SET)); } catch (e) { } }
+function applySettings() {
+  if (bodyMat) bodyMat.color.set(SET.color);
+  if (audio) audio.master.gain.value = muted ? 0 : SET.vol;
+  const sw = $("swatches"); if (sw) [...sw.children].forEach(b => b.classList.toggle("on", b.dataset.c === SET.color));
+  const hue = $("hue"); if (hue) hue.value = Math.round(new THREE.Color(SET.color).getHSL({ h: 0, s: 0, l: 0 }).h * 360);
+  const vol = $("vol"); if (vol) vol.value = Math.round(SET.vol * 100);
+  const mb = $("muteBtn"); if (mb) mb.textContent = muted ? "Sound: off" : "Sound: on";
+  const cs = $("colorSwatch"); if (cs) cs.style.background = SET.color;
+}
+function buildSettings() {
+  const sw = $("swatches");
+  SLED_COLORS.forEach(c => {
+    const b = document.createElement("button"); b.className = "sw"; b.style.background = c; b.dataset.c = c; b.title = c;
+    b.addEventListener("click", () => { SET.color = c; applySettings(); saveSettings(); });
+    sw.appendChild(b);
+  });
+  $("hue").addEventListener("input", e => { SET.color = "#" + new THREE.Color().setHSL(e.target.value / 360, 0.85, 0.55).getHexString(); applySettings(); saveSettings(); });
+  $("vol").addEventListener("input", e => { SET.vol = e.target.value / 100; muted = SET.vol === 0; applySettings(); saveSettings(); });
+  $("muteBtn").addEventListener("click", () => { muted = !muted; applySettings(); saveSettings(); });
+  $("viewBtn").addEventListener("click", () => { cycleView(); $("viewBtn").textContent = "View: " + VIEWS[camMode].n; });
+  $("closeSet").addEventListener("click", () => toggleSettings(false));
+  applySettings();
+}
+function toggleSettings(force) {
+  const open = force !== undefined ? force : $("settings").hidden;
+  $("settings").hidden = !open;
+  if (open) { $("viewBtn").textContent = "View: " + VIEWS[camMode].n; applySettings(); }
 }
 
 /* per-frame game tick */
@@ -1441,7 +1534,7 @@ function updGame(dt, spd) {
   if (near !== GS.near && near) toast(near === depot ? (GS.job && GS.job.dest !== depot ? `Hollis Station. Your delivery is for ${GS.job.dest.name}.` : "Hollis Ranger Station. Warm up, refuel, press E for work.") : `${near.name}. Warm stove inside.`);
   GS.near = near;
   const night = 1 - dayFactor(), elev = clamp((groundAt(P.x, P.z) - 90) / 120, 0, 1);
-  const cold = (0.3 + 0.35 * night + 0.9 * GS.storm + 0.35 * elev) * (GS.up.suit ? 0.65 : 1);
+  const cold = (0.3 + 0.35 * night + 0.9 * GS.storm + 0.35 * elev) * (GS.up.suit ? 0.65 : 1) * (GS.up.grips ? 0.8 : 1);
   if (near) { GS.warmth = Math.min(100, GS.warmth + 12 * dt); GS.coldWarned = false; } else GS.warmth -= cold * dt;
   if (GS.warmth < 30 && !GS.coldWarned) { GS.coldWarned = true; toast("You're freezing. Get to a cabin or the station.", "bad"); }
   if (GS.warmth <= 0) { blackout("cold"); return; }
@@ -1450,7 +1543,7 @@ function updGame(dt, spd) {
   if (GS.fuel <= 0 && !GS.outWarned) { GS.outWarned = true; toast("Out of fuel. Press F to call a tow ($100).", "bad"); }
   if (GS.job && near === GS.job.dest && spd < 4) deliver();
   for (const s of SITES) s.beacon.visible = GS.job ? s === GS.job.dest : (s === depot && near !== depot);
-  const relay = SITES[5]; if (relay.blink) relay.blink.visible = (gameClock % 1.6) < 0.5;
+  const relay = SITES[SITES.length - 1]; if (relay.blink) relay.blink.visible = (gameClock % 1.6) < 0.5;
   if (cargoMesh) cargoMesh.visible = !!GS.job;
   GS.smokeT += dt;
   if (GS.smokeT > 0.15) {
@@ -1506,6 +1599,7 @@ function boot() {
   P.y = surf(P.x, P.z);
   recenter(P.x, P.z, true);
   ready = true;
+  loadSettings(); buildSettings();
   const btn = $("start"); btn.disabled = false; btn.textContent = "START RIDING"; $("load").textContent = GS.delivered ? `Welcome back. ${GS.delivered} deliveries, $${GS.cash} in the bank.` : "Headphones on. Throttle is W.";
   btn.focus();
   btn.addEventListener("click", () => {
