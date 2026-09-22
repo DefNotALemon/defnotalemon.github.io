@@ -3,11 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#02040c">
 <title>69°N — Kjøllefjord Field Station</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/src/space.css">
+<style>
+  body{--disp:"Syne",sans-serif; --sans:"Outfit",sans-serif}
+  .kicker{color:#9dffc8}
+  .hero h1{font-weight:800}
+</style>
 </head>
 <body>
-<canvas class="sky" id="sky"></canvas>
+<canvas class="sky" id="sky" aria-hidden="true"></canvas>
+<div class="grain"></div>
+<header class="nav">
+  <span class="mark">69°22′ N</span>
+  <b>Kjøllefjord</b>
+</header>
+<div class="overlay">
+  <section class="hero">
+    <p class="kicker">field station · finnmark · kp <span id="kp">5.2</span></p>
+    <h1><span>Northern</span><span>lights.</span></h1>
+    <p class="lede">A live curtain over the Tana valley. The sky is not a wallpaper — it is a charged river, folding green into magenta, then going still as glass.</p>
+    <div class="stats">
+      <div>latitude<b>69°22′ N</b></div>
+      <div>temperature<b>−18 °C</b></div>
+      <div>moon<b>lemon, full</b></div>
+      <div>cloud<b>clear, 2/8</b></div>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>Tonight’s watch</h2>
+    <div class="grid">
+      <article class="card">
+        <small>21:40</small>
+        <h3>Arc over the fjord</h3>
+        <p>A quiet green band, then a sudden climb. Move the pointer — the curtains lean toward your hand.</p>
+      </article>
+      <article class="card">
+        <small>23:05</small>
+        <h3>Corona</h3>
+        <p>When the oval sits overhead the ribbons braid. Magenta at the edges means the energy is high enough to hit nitrogen.</p>
+      </article>
+      <article class="card">
+        <small>01:12</small>
+        <h3>Afterglow</h3>
+        <p>The cabin windows stay lit. The ice remembers the last color a few seconds longer than the air.</p>
+      </article>
+    </div>
+  </section>
+</div>
+<footer class="foot">
+  <span>Kjøllefjord Field Station · a room with a sky</span>
+  <span>reduced-motion respected</span>
+</footer>
 <script type="module" src="/src/aurora.js"></script>
 </body>
 </html>
