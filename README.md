@@ -14,7 +14,7 @@ Games open inside the site in a full-screen player (Escape or the `◂ Arcade` b
 
 Current cabinets: **Voidmaw** — an arcade shooter (source: [DefNotALemon/voidmaw](https://github.com/DefNotALemon/voidmaw)).
 
-Repo: [github.com/DefNotALemon/playlay](https://github.com/DefNotALemon/playlay)
+Repo: [github.com/DefNotALemon/defnotalemon.github.io](https://github.com/DefNotALemon/defnotalemon.github.io)
 
 ## Local
 
@@ -27,4 +27,4 @@ npm run dev
 
 Settings → Pages → Source: GitHub Actions.
 
-[https://defnotalemon.github.io/playlay/](https://defnotalemon.github.io/playlay/)
+[https://defnotalemon.github.io/](https://defnotalemon.github.io/)
