@@ -86,6 +86,7 @@ export function setSpace(on, { animate = true } = {}) {
     requestAnimationFrame(() => requestAnimationFrame(() => body.classList.remove("no-anim")));
   }
   body.classList.toggle("space", on);
+  if (!animate || reduced()) void body.offsetWidth; // flush styles while transitions are off, so a reload in the arcade never animates in
   coin.setAttribute("aria-pressed", on ? "true" : "false");
   coinLabel.textContent = on ? "Kjøllefjord" : "arcade";
   if (on) window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });

@@ -103,20 +103,27 @@ body.space .coin{filter:drop-shadow(0 0 26px rgba(255,220,80,.85)) drop-shadow(0
 .coin-label{font-family:var(--mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--mut)}
 
 /* ---------- lift-off ---------- */
-.overlay,.foot{transition:transform 4.6s cubic-bezier(.5,0,.2,1) .2s, opacity 2.2s ease 1.6s; will-change:transform, opacity} /* coming back down */
-body.space .overlay,body.space .foot{transition:transform 2.6s cubic-bezier(.65,0,.25,1), opacity 1.4s ease} /* going up */
+.overlay,.foot{transition:transform 4.6s cubic-bezier(.5,0,.2,1) .2s, opacity 2.2s ease 1.6s, visibility 0s; will-change:transform, opacity} /* coming back down */
+body.space .overlay,body.space .foot{transition:transform 2.6s cubic-bezier(.65,0,.25,1), opacity 1.4s ease, visibility 0s linear 2.6s} /* going up */
 /* the camera climbs, so the ground-level page falls away below and the arcade drops in from above */
 body.space .overlay,body.space .foot{transform:translateY(120vh); opacity:0; pointer-events:none}
 body.lifting .panel,body.lifting .cab{backdrop-filter:none; -webkit-backdrop-filter:none}
+/* Ghost guard: a layer that is out of view is also visibility:hidden (flipped at the END of its exit,
+   at the START of its entry), and the cabinets' blur only exists while you are up there.
+   Chrome can paint backdrop-filter children of an opacity:0 layer as a faint ghost on load. */
+.arcade{visibility:hidden}
+body.space .arcade{visibility:visible}
+body:not(.space) .cab{backdrop-filter:none; -webkit-backdrop-filter:none}
+body.space .overlay,body.space .foot{visibility:hidden}
 body.space{overflow:hidden}
 body.no-anim *{transition:none !important}
 
 .arcade{
   position:fixed; inset:0; z-index:6; overflow:auto; -webkit-overflow-scrolling:touch;
   transform:translateY(-120vh); opacity:0; pointer-events:none; will-change:transform, opacity;
-  transition:transform 4.6s cubic-bezier(.5,0,.2,1), opacity 1.6s ease; /* coming back down */
+  transition:transform 4.6s cubic-bezier(.5,0,.2,1), opacity 1.6s ease, visibility 0s linear 4.6s; /* coming back down */
 }
-body.space .arcade{transform:none; opacity:1; pointer-events:auto; transition:transform 2.6s cubic-bezier(.65,0,.25,1) .25s, opacity 1.2s ease 1.1s}
+body.space .arcade{transform:none; opacity:1; pointer-events:auto; transition:transform 2.6s cubic-bezier(.65,0,.25,1) .25s, opacity 1.2s ease 1.1s, visibility 0s}
 .arcade-inner{max-width:1080px; margin:0 auto; padding:clamp(96px,14vh,150px) clamp(20px,5vw,64px) 5rem}
 .arcade h2{
   font-family:var(--disp, "Syne", sans-serif); font-weight:800; letter-spacing:-.04em;
