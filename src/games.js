@@ -27,6 +27,7 @@ export const games = [
       "Haul supplies out of a ranger station to cabins buried in the backcountry. Fresh powder drags and burns fuel, your own packed trail runs fast and cheap, and the snow keeps filling it back in.",
     accent: ["#ff5a1f", "#7fc8e0"],
     controls: "keyboard · gamepad",
+    url: "https://defnotalemon.github.io/tracklayer/",
   },
   {
     id: "polybius",
