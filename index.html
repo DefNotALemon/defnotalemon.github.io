@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#02040c">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2248%22 fill=%22%23E8B423%22/%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2238%22 fill=%22%23FFE56A%22/%3E%3C/svg%3E">
 <title>69°N — Kjøllefjord Field Station</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,7 +57,7 @@
     <div class="stats">
       <div>latitude<b>69°22′ N</b></div>
       <div>temperature<b>−18 °C</b></div>
-      <div>moon<b>lemon, full</b></div>
+      <div>moon<b id="moonStat">lemon, full</b></div>
       <div>cloud<b>clear, 2/8</b></div>
     </div>
   </section>
@@ -106,5 +107,6 @@
   <span>reduced-motion respected</span>
 </footer>
 <script type="module" src="/src/aurora.js"></script>
+<script type="module" src="/src/moon.js"></script>
 </body>
 </html>
