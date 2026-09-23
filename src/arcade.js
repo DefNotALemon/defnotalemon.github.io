@@ -87,7 +87,7 @@ export function setSpace(on, { animate = true } = {}) {
   }
   body.classList.toggle("space", on);
   coin.setAttribute("aria-pressed", on ? "true" : "false");
-  coinLabel.textContent = on ? "ground" : "arcade";
+  coinLabel.textContent = on ? "Kjøllefjord" : "arcade";
   if (on) window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
   const hash = on ? "#arcade" : "";
   if (location.hash !== hash) history.replaceState(null, "", location.pathname + location.search + hash);
