@@ -33,8 +33,22 @@ function n3(x, y) {
   return noise(x, y) * 0.5 + noise(x * 2.03, y * 2.03) * 0.32 + noise(x * 4.07, y * 4.07) * 0.18;
 }
 
-function setup() {
-  ({ ctx, w, h } = resizeCanvas(canvas, 1.75));
+// Render resolution for the sky canvas. It starts a notch under the old 1.75 cap and a
+// watchdog in tick() steps it down if frames stop keeping pace with the display. That is
+// what cures the "moved the mouse while it loaded, now it's laggy until reload" state:
+// input + page-load work made a few frames miss, the browser fell back to a slower frame
+// cadence, and at full resolution the page never had enough headroom to climb back out.
+const DPR_STEPS = [1.5, 1.25, 1];
+let dprStep = 0;
+
+function setup(sameSize = false) {
+  ({ ctx, w, h } = resizeCanvas(canvas, DPR_STEPS[dprStep]));
+  if (sameSize && stars.length) {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    paintLand(); // only the backing resolution changed: keep the same stars, just repaint the land
+    return;
+  }
   stars = makeStars(Math.floor((w * h) / 2800), w, h);
   deep = makeStars(Math.floor((w * h) / 2600), w, h);
   for (const s of deep) s.r *= 0.7;
@@ -296,7 +310,7 @@ function drawCabin() {
 }
 
 function paintLand() {
-  const dpr = Math.min(devicePixelRatio || 1, 1.75);
+  const dpr = Math.min(devicePixelRatio || 1, DPR_STEPS[dprStep]);
   land.width = Math.floor(w * dpr);
   land.height = Math.floor(h * dpr);
   const main = ctx;
@@ -379,7 +393,7 @@ function drawField(list, t, driftX, driftY, alphaMul, streak, cheap = false) {
       ctx.moveTo(x, y);
       ctx.lineTo(x, y - streak * s.r);
       ctx.stroke();
-    } else if (cheap) {
+    } else if (cheap || s.r < 0.9) {
       ctx.fillRect(x - s.r, y - s.r, s.r * 2, s.r * 2);
     } else {
       ctx.beginPath();
@@ -393,11 +407,36 @@ function drawField(list, t, driftX, driftY, alphaMul, streak, cheap = false) {
 const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
 
 setup(); // after every const above is initialised — paintLand reads the peak tables
-addEventListener("resize", setup);
+addEventListener("resize", () => setup());
+
+// Frame-pace watchdog. `best` learns the display's refresh interval (8.3 ms on a 120 Hz
+// panel, 16.7 ms at 60 Hz); if the recent average runs well behind it for a couple of
+// seconds, drop one resolution step. Hidden tabs and the first second after load are ignored.
+const pace = { best: 1000, avg: 0, n: 0, slow: 0, cool: 0, born: performance.now() };
+function watch(ms, now) {
+  if (ms <= 0 || ms > 250 || document.hidden) return; // tab switch / breakpoint, not a real frame
+  if (now - pace.born < 1000) return;
+  pace.best = Math.max(6, Math.min(pace.best, ms * 1.02 + 0.2));
+  pace.avg = pace.n++ ? pace.avg + (ms - pace.avg) * 0.05 : ms;
+  if (pace.cool > 0) return void pace.cool--;
+  pace.slow = pace.avg > pace.best * 1.45 ? pace.slow + 1 : 0;
+  if (pace.slow > 120 && dprStep < DPR_STEPS.length - 1 && Math.min(devicePixelRatio || 1, DPR_STEPS[dprStep]) > DPR_STEPS[dprStep + 1]) {
+    dprStep++;
+    setup(true);
+    pace.slow = 0;
+    pace.avg = pace.best;
+    pace.cool = 180; // give the new size a few seconds before judging it
+  }
+}
+document.addEventListener("visibilitychange", () => {
+  pace.avg = pace.best; // don't count the gap
+  last = performance.now();
+});
 
 let last = performance.now();
 function tick(now) {
   const t = now / 1000;
+  watch(now - last, now);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   stepLift(dt);
