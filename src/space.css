@@ -32,8 +32,13 @@ canvas.sky{position:fixed; inset:0; width:100%; height:100%; z-index:0; display:
 .nav .links{margin-left:auto; display:flex; gap:1.25rem; flex-wrap:wrap}
 .nav a{color:var(--mut); border-bottom:1px solid transparent; padding-bottom:2px}
 .nav a:hover,.nav a.on{color:var(--ink); border-color:currentColor}
+.nav a.tip{color:#FFE56A}
+.nav a.tip:hover{color:#fff3b0}
+/* the lemon owns the top-right on the ground, so the links sit left of it */
+.nav .links{margin-right:calc(18vw + 60px)}
 @media (max-width:700px){
-  .nav .links a:nth-child(n+4){display:none}
+  .nav .links{margin-right:84px; gap:.9rem}
+  .nav .mark{display:none}
 }
 
 .overlay{position:relative; z-index:5}
@@ -206,3 +211,31 @@ body.playing{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .overlay,.foot,.arcade,.cab,.coin{transition:none}
 }
+
+/* ---------- the tip jar + itch.io ---------- */
+.support{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:2rem; margin-top:0}
+.support .lede{margin-top:.6rem}
+.support-btns{display:flex; flex-wrap:wrap; gap:.8rem}
+.btn-tip,.btn-itch{
+  display:inline-flex; align-items:center; gap:.6rem;
+  font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+  border-radius:999px; padding:.85rem 1.35rem; white-space:nowrap;
+  transition:background .15s ease, border-color .15s ease, box-shadow .2s ease, transform .1s ease;
+}
+.btn-tip{color:#1a1204; background:linear-gradient(180deg,#FFE56A,#F0C43A); box-shadow:0 0 24px rgba(255,210,70,.28)}
+.btn-tip:hover{box-shadow:0 0 36px rgba(255,210,70,.55)}
+.btn-itch{color:var(--ink); border:1px solid rgba(244,241,234,.28); background:rgba(255,255,255,.04)}
+.btn-itch:hover{border-color:#fa5c5c; background:rgba(250,92,92,.1)}
+.btn-tip:active,.btn-itch:active{transform:translateY(1px)}
+.lemon{width:14px; height:14px; border-radius:50%; background:radial-gradient(circle at 40% 38%, #FFF3A8, #E8B423 70%); box-shadow:inset 0 0 0 1.5px #b88a12}
+
+.takehome{
+  margin-top:2.4rem; padding:1.4rem 1.4rem; border:1px solid var(--line); border-radius:14px;
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1.2rem;
+  background:rgba(5,8,16,.5);
+}
+.takehome p{color:var(--mut); max-width:52ch; line-height:1.55}
+.takehome b{color:var(--ink); font-weight:600}
+.cab-foot .itch{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-left:auto}
+.cab-foot .itch:hover{color:#fa5c5c}
+@media (max-width:560px){ .support-btns a{flex:1; justify-content:center} }

@@ -7,6 +7,7 @@
 //   blurb    — two sentences, tops
 //   accent   — marquee glow colours (two hex values)
 //   controls — what the player needs to know before the coin drops
+//   itch     — optional itch.io page for this game; adds an "itch.io ↗" link on the cabinet
 //   url      — override if the game lives somewhere else (another repo, another host)
 
 export const games = [

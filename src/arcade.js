@@ -128,6 +128,7 @@ function cabinet(g) {
     </div>
     <div class="cab-foot">
       <span class="ctl">${g.controls || ""}</span>
+      ${g.itch ? `<a class="itch" href="${g.itch}" target="_blank" rel="noopener">itch.io ↗</a>` : ""}
       <button type="button" class="coinslot" data-id="${g.id}">Insert coin <b>▸</b></button>
     </div>`;
   el.querySelector(".coinslot").addEventListener("click", () => play(g));

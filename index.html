@@ -22,6 +22,10 @@
 <header class="nav">
   <span class="mark">69°22′ N</span>
   <b>Kjøllefjord</b>
+  <nav class="links" aria-label="Elsewhere">
+    <a data-link="itch" href="https://defnotalemon.itch.io" target="_blank" rel="noopener">itch.io</a>
+    <a data-link="kofi" href="https://ko-fi.com/defnotalemon" target="_blank" rel="noopener" class="tip">Donate</a>
+  </nav>
 </header>
 <div class="coin-wrap">
   <button id="coin" class="coin" type="button" aria-pressed="false" aria-label="Arcade: lift off into the stars">
@@ -81,6 +85,17 @@
       </article>
     </div>
   </section>
+  <section class="panel support" aria-label="Support">
+    <div>
+      <p class="kicker">lemon inc · keep the generator running</p>
+      <h2>Fuel the station.</h2>
+      <p class="lede">Everything here is made by one person out past the treeline. If you think it’s cool, drop a coin in the jar — it goes straight into the next game. The finished ones live on itch.io.</p>
+    </div>
+    <div class="support-btns">
+      <a class="btn-tip" data-link="kofi" href="https://ko-fi.com/defnotalemon" target="_blank" rel="noopener"><span class="lemon" aria-hidden="true"></span>Donate on Ko-fi</a>
+      <a class="btn-itch" data-link="itch" href="https://defnotalemon.itch.io" target="_blank" rel="noopener">Games on itch.io ↗</a>
+    </div>
+  </section>
 </div>
 <section id="arcade" class="arcade" aria-label="Arcade">
   <div class="arcade-inner">
@@ -88,6 +103,13 @@
     <h2><span>Pick a</span><span>cabinet.</span></h2>
     <p class="lede">The ground is a long way down now. Every machine up here runs in the browser — drop a coin, play, press escape to come back to the row.</p>
     <div id="cabinets" class="cabinets"></div>
+    <div class="takehome">
+      <p><b>Take a cabinet home.</b> Downloadable builds and devlogs are on itch.io, and every coin in the jar keeps this orbit lit.</p>
+      <div class="support-btns">
+        <a class="btn-itch" data-link="itch" href="https://defnotalemon.itch.io" target="_blank" rel="noopener">itch.io ↗</a>
+        <a class="btn-tip" data-link="kofi" href="https://ko-fi.com/defnotalemon" target="_blank" rel="noopener"><span class="lemon" aria-hidden="true"></span>Tip jar</a>
+      </div>
+    </div>
     <div class="descend">
       <button id="ground" type="button" class="ground-btn"><span>▾</span> Back down to the ground</button>
       <p>Slow ride. The lights will be waiting.</p>
@@ -104,9 +126,10 @@
 </div>
 <footer class="foot">
   <span>Kjøllefjord Field Station · a room with a sky</span>
-  <span>reduced-motion respected</span>
+  <span><a data-link="itch" href="https://defnotalemon.itch.io" target="_blank" rel="noopener">itch.io</a> · <a data-link="kofi" href="https://ko-fi.com/defnotalemon" target="_blank" rel="noopener">donate</a> · reduced-motion respected</span>
 </footer>
 <script type="module" src="/src/aurora.js"></script>
 <script type="module" src="/src/moon.js"></script>
+<script type="module" src="/src/links.js"></script>
 </body>
 </html>
