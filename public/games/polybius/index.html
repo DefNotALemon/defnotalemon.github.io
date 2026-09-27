@@ -50,7 +50,7 @@
     border-radius:18px;overflow:hidden;
     box-shadow:inset 0 0 80px rgba(0,0,0,.9),0 0 0 6px #050409,0 0 40px rgba(53,240,255,.08);
   }
-  canvas{display:block;width:100%;height:100%;touch-action:none}
+  canvas{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
   .crt{
     pointer-events:none;position:absolute;inset:0;border-radius:18px;
     background:
@@ -64,18 +64,21 @@
   }
   .touch button{
     pointer-events:auto;font-family:var(--display);font-size:11px;
-    width:64px;height:64px;border-radius:50%;border:1px solid var(--phos-dim);
-    background:rgba(0,0,0,.5);color:var(--phos);
+    width:72px;height:72px;border-radius:50%;border:1px solid var(--phos-dim);
+    background:rgba(0,0,0,.55);color:var(--phos);
+    touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-appearance:none;appearance:none;
   }
-  .touch .grp{display:flex;gap:10px}
+  .touch button:active{background:rgba(53,240,255,.18);border-color:var(--phos)}
+  .touch .grp{display:flex;gap:12px}
   @media (pointer:coarse){.touch{display:flex}}
+  @media (pointer:coarse){ header .controls #btnCoin{display:none} }
   footer{
     display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
     padding-block:8px 2px;font-size:16px;color:var(--muted);letter-spacing:.04em;
   }
   footer kbd{font-family:var(--mono);color:var(--text);border:1px solid var(--bezel-edge);padding:0 5px;border-radius:2px}
   @media (prefers-reduced-motion:reduce){.crt{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.65) 100%)}}
-  @media (max-width:520px){header .brand small{display:none} footer .keys{display:none}}
+  @media (max-width:520px){header .brand small{display:none} footer .keys{display:none} footer{font-size:14px} header .controls button{font-size:15px;padding:4px 8px}}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} [hidden]{display:none!important}</style>
 </head>
@@ -94,8 +97,8 @@
   <canvas id="c" aria-label="Polybius arcade screen"></canvas>
   <div class="crt"></div>
   <div class="touch" aria-hidden="true">
-    <div class="grp"><button id="tL">◀</button><button id="tR">▶</button></div>
-    <div class="grp"><button id="tZ">Z</button><button id="tF">FIRE</button></div>
+    <div class="grp"><button id="tL" aria-label="Rotate left">◀</button><button id="tR" aria-label="Rotate right">▶</button></div>
+    <div class="grp"><button id="tZ" aria-label="Superzap">ZAP</button><button id="tF" aria-label="Fire">FIRE</button></div>
   </div>
 </div>
 
@@ -257,8 +260,9 @@ function laneCenterUnit(i){
 // projection: depth d in [0 far .. 1 rim]
 let CAM = { cx: 0, cy: 0, r: 1, vx: 0, vy: 0, zoom: 1 };
 function updateCam(){
-  CAM.cx = W / 2; CAM.cy = H / 2 + 10;
-  CAM.r = Math.min(W, H) * 0.40 * CAM.zoom;
+  const reserve = TOUCH ? 96 : 0;                   // keep the tube and HUD clear of the touch buttons
+  CAM.cx = W / 2; CAM.cy = (H - reserve) / 2 + 10;
+  CAM.r = Math.min(W, H - reserve) * 0.40 * CAM.zoom;
   CAM.vx = CAM.cx + Math.sin(S.t * 0.35) * CAM.r * 0.18;
   CAM.vy = CAM.cy + Math.cos(S.t * 0.27) * CAM.r * 0.12;
 }
@@ -289,7 +293,31 @@ const hold = (id, k) => { const el = document.getElementById(id); const on = e =
 hold('tL', 'ArrowLeft'); hold('tR', 'ArrowRight');
 document.getElementById('tF').addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); fireQueued = true; anyKey = true; });
 document.getElementById('tZ').addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); zapQueued = true; });
-canvas.addEventListener('pointerdown', e => { audioInit(); if (S.mode === 'attract') { anyKey = true; } });
+// ---- touch spinner: drag anywhere on the screen to rotate the claw, tap to fire ----
+const TOUCH = window.matchMedia && matchMedia('(pointer:coarse)').matches;
+const LANES_PER_PX = 1 / 26;                       // 26px of drag = one lane
+let drag = null;                                   // { id, x0, lane0, moved, t0 }
+canvas.addEventListener('pointerdown', e => {
+  audioInit();
+  if (S.mode === 'attract') {
+    if (TOUCH) { if (S.credits === 0) { S.credits++; SFX.coin(); } anyKey = true; } else anyKey = true;
+    return;
+  }
+  if (drag) return;
+  drag = { id: e.pointerId, x0: e.clientX, lane0: S.player.lanePos, moved: 0, t0: performance.now() };
+  try { canvas.setPointerCapture(e.pointerId); } catch(err){}
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x0; drag.moved = Math.max(drag.moved, Math.abs(dx));
+  if (S.mode === 'play' || S.mode === 'test' || S.mode === 'warp') S.player.lanePos = drag.lane0 + dx * LANES_PER_PX;
+});
+const endDrag = e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (drag.moved < 10 && performance.now() - drag.t0 < 350) fireQueued = true;   // a tap, not a drag
+  drag = null;
+};
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 
 // ---------- helpers ----------
 function say(text, dur = 1.2){ S.msg = text; S.msgT = dur; }
@@ -376,7 +404,7 @@ function update(dt){
     if (keys.ArrowLeft || keys.a || keys.A) S.player.lanePos -= spd * dt;
     if (keys.ArrowRight || keys.d || keys.D) S.player.lanePos += spd * dt;
     if (S.tube.closed) { const n = S.lanes; S.player.lanePos = ((S.player.lanePos % n) + n) % n; }
-    else S.player.lanePos = Math.max(0, Math.min(S.lanes - 0.001, S.player.lanePos));
+    else { const c = Math.max(0, Math.min(S.lanes - 0.001, S.player.lanePos)); if (drag && c !== S.player.lanePos) { drag.lane0 += c - S.player.lanePos; } S.player.lanePos = c; }
     S.player.lane = Math.floor(S.player.lanePos) % S.lanes;
   }
 
@@ -581,31 +609,33 @@ function drawHUD(){
   // lives as small claws
   for (let i = 0; i < S.lives; i++) { const x = W - pad - 12 - i * 22, y = 42; ctx.lineWidth = 1.5; glow(S.pal.b, 8); ctx.beginPath(); ctx.moveTo(x - 8, y - 6); ctx.lineTo(x - 5, y + 4); ctx.lineTo(x, y - 2); ctx.lineTo(x + 5, y + 4); ctx.lineTo(x + 8, y - 6); ctx.stroke(); }
   // superzap + compliance
-  text('ZAP ' + (S.zaps ? '■' : '□'), pad, H - 24, 8, S.zaps ? S.pal.b : '#555', 'left');
-  text('COMPLIANCE', W - pad, H - 34, 7, S.pal.a, 'right');
-  ctx.shadowBlur = 0; ctx.strokeStyle = S.pal.a; ctx.lineWidth = 1; ctx.strokeRect(W - pad - 120, H - 26, 120, 8);
-  ctx.fillStyle = S.compliance < 30 ? '#ff2a2a' : S.pal.a; ctx.fillRect(W - pad - 120, H - 26, 120 * S.compliance / 100, 8);
-  text('SESSION ' + S.sessionId, W / 2, H - 24, 7, '#5b6a70');
+  const B = TOUCH ? H - 96 : H;
+  text('ZAP ' + (S.zaps ? '■' : '□'), pad, B - 24, 8, S.zaps ? S.pal.b : '#555', 'left');
+  text('COMPLIANCE', W - pad, B - 34, 7, S.pal.a, 'right');
+  ctx.shadowBlur = 0; ctx.strokeStyle = S.pal.a; ctx.lineWidth = 1; ctx.strokeRect(W - pad - 120, B - 26, 120, 8);
+  ctx.fillStyle = S.compliance < 30 ? '#ff2a2a' : S.pal.a; ctx.fillRect(W - pad - 120, B - 26, 120 * S.compliance / 100, 8);
+  text('SESSION ' + S.sessionId, W / 2, B - 24, 7, '#5b6a70');
 }
 function drawAttract(){
-  // spinning demo tube in background
+  const Hb = TOUCH ? H - 96 : H; // attract text stays above the touch buttons
   const p = S.tube ? S.tube.pts : null;
   ctx.globalAlpha = 0.5; drawTube(); ctx.globalAlpha = 1;
   const blink = Math.floor(S.t * 2) % 2 === 0;
-  const ty = H * 0.30;
+  const ty = Hb * 0.30;
   // big title, slightly drifting
   const dx = Math.sin(S.t * 0.8) * 2;
   text('POLYBIUS', W / 2 + dx, ty, Math.min(48, W / 12), S.pal.a);
   text('© 1981 SINNESLÖSCHEN', W / 2, ty + Math.min(48, W / 12) * 0.9 + 6, 9, S.pal.b);
   if (S.modeT % 12 < 6) {
-    text('HIGH SCORES', W / 2, H * 0.52, 9, '#ffffff');
-    S.hiTable.forEach((r, i) => { text(String(i + 1) + '  ' + r[0] + '   ' + String(r[1]).padStart(7, '0'), W / 2, H * 0.52 + 22 + i * 18, 8, i === 0 ? S.pal.a : '#9aa4a8'); });
+    text('HIGH SCORES', W / 2, Hb * 0.52, 9, '#ffffff');
+    S.hiTable.forEach((r, i) => { text(String(i + 1) + '  ' + r[0] + '   ' + String(r[1]).padStart(7, '0'), W / 2, Hb * 0.52 + 22 + i * 18, 8, i === 0 ? S.pal.a : '#9aa4a8'); });
   } else {
     const lines = ['SUBJECT NOTICE', '', 'THIS UNIT COLLECTS PERFORMANCE DATA', 'PLAY DURATION IS NOT LIMITED', 'MEMORY EFFECTS ARE TEMPORARY', '', 'DO NOT DISCUSS THIS MACHINE'];
-    lines.forEach((l, i) => text(l, W / 2, H * 0.52 + i * 18, 8, i === 0 ? S.pal.b : '#9aa4a8'));
+    lines.forEach((l, i) => text(l, W / 2, Hb * 0.52 + i * 18, 8, i === 0 ? S.pal.b : '#9aa4a8'));
   }
-  if (S.credits > 0) { if (blink) text('PRESS FIRE TO BEGIN', W / 2, H * 0.86, 10, '#ffffff'); text('CREDITS ' + S.credits, W / 2, H * 0.93, 8, S.pal.a); }
-  else if (blink) text('INSERT COIN  ( ENTER )', W / 2, H * 0.86, 10, '#ffffff');
+  if (S.credits > 0) { if (blink) text(TOUCH ? 'TAP TO BEGIN' : 'PRESS FIRE TO BEGIN', W / 2, Hb * 0.86, 10, '#ffffff'); text('CREDITS ' + S.credits, W / 2, Hb * 0.93, 8, S.pal.a); }
+  else if (blink) text(TOUCH ? 'TAP TO INSERT COIN' : 'INSERT COIN  ( ENTER )', W / 2, Hb * 0.86, 10, '#ffffff');
+  if (TOUCH) text('DRAG TO ROTATE  ·  TAP TO FIRE', W / 2, Hb * 0.93 + (S.credits > 0 ? 14 : 0), 7, '#5b6a70');
   text('HIGH ' + String(S.hi).padStart(7, '0'), W / 2, 30, 9, '#ffffff');
 }
 function drawTest(){
