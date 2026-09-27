@@ -49,12 +49,22 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ground);color:va
 .panel button:hover{background:#9af7ff;}
 .panel button:focus-visible{outline:2px solid var(--ink);outline-offset:3px;}
 .panel .foot{margin-top:14px;font-size:11px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;}
-#touch{position:absolute;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom,0px));display:none;justify-content:space-between;padding:0 16px;pointer-events:none;}
-#wrap.touch #touch{display:flex;}
+#touch{position:absolute;inset:0;display:none;pointer-events:none;}
+#wrap.touch.playing #touch{display:block;} /* only while a game is running, so the pads never sit over the title card */
 #wrap.touch #rack{bottom:calc(8px + env(safe-area-inset-bottom,0px));}
 #wrap.touch #scan{display:none;}
-#touch .grp{display:flex;gap:10px;pointer-events:auto;}
-#touch button{width:64px;height:64px;border-radius:50%;border:1px solid var(--dim);background:rgba(233,227,255,.08);color:var(--ink);font-family:var(--hud);font-size:12px;font-weight:700;letter-spacing:.1em;touch-action:none;}
+#wrap.touch .keys.kb{display:none;}
+.keys.touchkeys{display:none;}
+#wrap.touch .keys.touchkeys{display:grid;}
+#touch .zone{position:absolute;left:0;bottom:0;width:58%;height:62%;pointer-events:auto;touch-action:none;}
+#touch .hint{position:absolute;left:24px;bottom:calc(72px + env(safe-area-inset-bottom,0px));font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);transition:opacity .3s;}
+#touch .zone.used .hint{opacity:0;}
+#stickBase{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:1px solid rgba(94,242,255,.35);background:rgba(94,242,255,.06);display:none;}
+#stickBase.on{display:block;}
+#stickKnob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(233,227,255,.85);box-shadow:0 0 14px rgba(94,242,255,.6);}
+#touch .grp{position:absolute;right:16px;bottom:calc(28px + env(safe-area-inset-bottom,0px));display:flex;align-items:flex-end;gap:12px;pointer-events:auto;}
+#touch button{width:62px;height:62px;border-radius:50%;border:1px solid var(--dim);background:rgba(233,227,255,.08);color:var(--ink);font-family:var(--hud);font-size:12px;font-weight:700;letter-spacing:.1em;touch-action:none;padding:0;}
+#touch button.fire{width:82px;height:82px;border-color:var(--crystal);color:var(--crystal);}
 #touch button.act{background:rgba(94,242,255,.3);border-color:var(--crystal);}
 #touch button.bomb{border-color:var(--maw);color:var(--maw);}
 @media (max-width:520px){#hud{font-size:12px;padding:8px 16px;}#hud .val{font-size:16px;}#scan{width:110px;height:110px;}}
@@ -75,14 +85,20 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ground);color:va
   <div id="sub"></div>
   <div id="msg"></div>
   <div id="touch">
-    <div class="grp"><button id="tl" aria-label="Turn left">◀</button><button id="tr" aria-label="Turn right">▶</button><button id="tt" aria-label="Thrust">THR</button><button id="tk" aria-label="Brake">BRK</button></div>
-    <div class="grp"><button id="tb" class="bomb" aria-label="Bomb">BOMB</button><button id="tf" aria-label="Fire">FIRE</button></div>
+    <div id="stickZone" class="zone" aria-hidden="true"><div id="stickBase"><div id="stickKnob"></div></div><span class="hint">drag here to fly</span></div>
+    <div class="grp"><button id="tk" aria-label="Brake">BRK</button><button id="tb" class="bomb" aria-label="Bomb">BOMB</button><button id="tf" class="fire" aria-label="Fire">FIRE</button></div>
   </div>
   <div id="ov">
     <div class="panel" id="panel">
       <h1>VOID<span>MAW</span></h1>
       <p>Something is being assembled out in the dark. The drones are feeding it. Shoot the planetoids, take the crystals first (drift close and the tractor field grabs them), and stack bombs — you'll need thirteen when it wakes up.</p>
-      <div class="keys">
+      <div class="keys touchkeys">
+        <b>LEFT SIDE</b><span>drag to fly — the ship turns and thrusts toward your thumb</span>
+        <b>FIRE</b><span>hold to shoot</span>
+        <b>BOMB</b><span>launch one (homes on the Maw)</span>
+        <b>BRK</b><span>retro jets</span>
+      </div>
+      <div class="keys kb">
         <b>← → / A D</b><span>rotate</span>
         <b>↑ / W</b><span>thrust</span>
         <b>↓ / S</b><span>brake (retro jets)</span>
@@ -147,7 +163,7 @@ function mkWorker(t){return {x:boss.x+rnd(-200,200),y:boss.y+rnd(-200,200),vx:0,
 function mkWarrior(t){return {x:boss.x+rnd(-300,300),y:boss.y+rnd(-300,300),vx:0,vy:0,a:0,dead:t>0,t:t,cool:60,r:12,str:rnd(-1,1)<0?-1:1};}
 
 /* ---------- input ---------- */
-const keys={},T={l:0,r:0,t:0,f:0,k:0};
+const keys={},T={f:0,k:0,stick:0,sx:0,sy:0};
 addEventListener('keydown',e=>{if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys[e.code]=true;if(e.repeat)return;onKey(e.code);});
 addEventListener('keyup',e=>{keys[e.code]=false;});
 function onKey(c){
@@ -161,10 +177,16 @@ $('start').addEventListener('click',()=>{ac();startGame();});
 if('ontouchstart' in window||navigator.maxTouchPoints>0){wrap.classList.add('touch');
   const bind=(id,k)=>{const b=$(id);const on=e=>{e.preventDefault();T[k]=1;b.classList.add('act');ac();};const off=e=>{e.preventDefault();T[k]=0;b.classList.remove('act');};
     b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);};
-  bind('tl','l');bind('tr','r');bind('tt','t');bind('tf','f');bind('tk','k');
+  bind('tf','f');bind('tk','k');
   $('tb').addEventListener('pointerdown',e=>{e.preventDefault();ac();if(S.mode==='play')launchBomb();});
+  // virtual stick: touch anywhere on the left, drag; the ship turns toward your thumb and thrusts by how far you push
+  const zone=$('stickZone'),base=$('stickBase'),knob=$('stickKnob'),R=52;let sid=null,sx=0,sy=0;
+  zone.addEventListener('pointerdown',e=>{if(sid!==null)return;e.preventDefault();sid=e.pointerId;sx=e.clientX;sy=e.clientY;const r=zone.getBoundingClientRect();base.style.left=(sx-r.left)+'px';base.style.top=(sy-r.top)+'px';base.classList.add('on');zone.classList.add('used');knob.style.transform='';T.stick=1;T.sx=0;T.sy=0;try{zone.setPointerCapture(sid);}catch(_){}ac();});
+  const mv=e=>{if(e.pointerId!==sid)return;e.preventDefault();let dx=e.clientX-sx,dy=e.clientY-sy;const d=Math.hypot(dx,dy)||1;const m=Math.min(1,d/R);dx/=d;dy/=d;T.sx=dx*m;T.sy=dy*m;knob.style.transform='translate('+(dx*m*R)+'px,'+(dy*m*R)+'px)';};
+  const up=e=>{if(e.pointerId!==sid)return;sid=null;T.stick=0;T.sx=T.sy=0;base.classList.remove('on');knob.style.transform='';};
+  zone.addEventListener('pointermove',mv);zone.addEventListener('pointerup',up);zone.addEventListener('pointercancel',up);
 }
-function startGame(){S.mode='play';S.score=0;S.zone=1;S.lives=3;S.bombs=0;S.nextLife=50000;ov.hidden=true;newZone(1);hud(true);}
+function startGame(){wrap.classList.add('playing');S.mode='play';S.score=0;S.zone=1;S.lives=3;S.bombs=0;S.nextLife=50000;ov.hidden=true;newZone(1);hud(true);}
 
 /* ---------- helpers ---------- */
 function burst(x,y,n,col,sp){for(let i=0;i<n;i++){const a=Math.random()*TAU,v=rnd(0.5,sp||4);parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:rnd(20,50),c:col});}}
@@ -185,9 +207,11 @@ function update(){
   if(P.dead){P.dead--;if(P.dead===0){if(S.lives<=0){gameOver();return;}let x,y;do{x=Math.random()*W;y=Math.random()*H;}while(Math.hypot(wd(x-boss.x,W),wd(y-boss.y,H))<1600);P.x=x;P.y=y;P.vx=P.vy=0;P.inv=180;}}
   else{
     if(P.inv>0)P.inv--;
-    const L=keys.ArrowLeft||keys.KeyA||T.l,R=keys.ArrowRight||keys.KeyD||T.r,U=keys.ArrowUp||keys.KeyW||T.t,F=keys.Space||T.f,K=keys.ArrowDown||keys.KeyS||T.k;
+    const L=keys.ArrowLeft||keys.KeyA,R=keys.ArrowRight||keys.KeyD,U=keys.ArrowUp||keys.KeyW,F=keys.Space||T.f,K=keys.ArrowDown||keys.KeyS||T.k;
     if(L)P.a-=0.075;if(R)P.a+=0.075;
-    if(U){P.vx+=Math.cos(P.a)*0.17;P.vy+=Math.sin(P.a)*0.17;if(frame%3===0)parts.push({x:P.x-Math.cos(P.a)*12,y:P.y-Math.sin(P.a)*12,vx:P.vx-Math.cos(P.a)*3+rnd(-.5,.5),vy:P.vy-Math.sin(P.a)*3+rnd(-.5,.5),l:14,c:'#ffb347'});}
+    let th=U?1:0;
+    if(T.stick){const m=Math.hypot(T.sx,T.sy);if(m>0.18){const want=Math.atan2(T.sy,T.sx);let da=want-P.a;while(da>Math.PI)da-=TAU;while(da<-Math.PI)da+=TAU;P.a+=Math.max(-0.11,Math.min(0.11,da));if(m>0.38&&Math.abs(da)<1.3)th=Math.max(th,(m-0.38)/0.62);}}
+    if(th>0){P.vx+=Math.cos(P.a)*0.17*th;P.vy+=Math.sin(P.a)*0.17*th;if(frame%3===0)parts.push({x:P.x-Math.cos(P.a)*12,y:P.y-Math.sin(P.a)*12,vx:P.vx-Math.cos(P.a)*3+rnd(-.5,.5),vy:P.vy-Math.sin(P.a)*3+rnd(-.5,.5),l:14,c:'#ffb347'});}
     P.brk=!!K&&Math.hypot(P.vx,P.vy)>0.05;
     if(P.brk){P.vx*=0.93;P.vy*=0.93;if(frame%2===0){const sp=rnd(-0.5,0.5);parts.push({x:P.x+Math.cos(P.a)*15,y:P.y+Math.sin(P.a)*15,vx:P.vx+Math.cos(P.a+sp)*4.5,vy:P.vy+Math.sin(P.a+sp)*4.5,l:16,c:'#cfeaff'});}if(frame%12===0)tone(1500,0.1,'sine',0.02,-900);}
     P.vx*=0.988;P.vy*=0.988;const v=Math.hypot(P.vx,P.vy);if(v>7.2){P.vx*=7.2/v;P.vy*=7.2/v;}
@@ -270,7 +294,7 @@ function update(){
   if(S.score>=S.nextLife){S.nextLife+=50000;S.lives++;flash('EXTRA SHIP',100);tone(660,0.15,'square',0.06,400);setTimeout(()=>tone(990,0.3,'square',0.06,300),130);hud(true);}
   if(frame%20===0)hud();
 }
-function gameOver(){S.mode='over';if(S.score>S.hi){S.hi=S.score;try{localStorage.setItem('voidmaw_hi',String(S.hi));}catch(e){}}
+function gameOver(){wrap.classList.remove('playing');S.mode='over';if(S.score>S.hi){S.hi=S.score;try{localStorage.setItem('voidmaw_hi',String(S.hi));}catch(e){}}
   panel.innerHTML='<h1>EAT<span>EN</span></h1><p>The void keeps what it catches. Sector '+S.zone+' reached.</p><div class="big">'+S.score.toLocaleString()+'</div><button id="start">Again</button><div class="foot">Best '+S.hi.toLocaleString()+' · Enter to relaunch</div>';
   $('start').addEventListener('click',()=>{ac();startGame();});ov.hidden=false;}
 
