@@ -39,6 +39,16 @@ export const games = [
     accent: ["#35f0ff", "#ff3ae0"],
     controls: "keyboard · touch",
   },
+  {
+    id: "switchback",
+    title: "Switchback",
+    tag: "e-bike courier · mountain physics",
+    blurb:
+      "Parcels out of a canyon-floor garage to a cabin, a trail camp and the lookout on the ridge. One battery, one motor: boost gets you up the switchbacks and cooks if you lean on it. Dirt grips, gravel slides, mud swallows.",
+    accent: ["#c6ff3d", "#ff7a2f"],
+    controls: "keyboard · gamepad",
+    url: "https://defnotalemon.github.io/switchback/",
+  },
 ];
 
 export const gameUrl = (g) => g.url || `./games/${g.id}/index.html`;
