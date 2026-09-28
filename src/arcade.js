@@ -78,6 +78,7 @@ export function setSpace(on, { animate = true } = {}) {
   clearTimeout(liftTimer);
   if (animate && !reduced()) {
     body.classList.add("lifting");
+    void body.offsetWidth; // the arcade is display:none on the ground; give it a start frame so the climb animates
     liftTimer = setTimeout(() => body.classList.remove("lifting"), (dur(on) + 0.5) * 1000);
   }
   if (!animate || reduced()) {
@@ -180,3 +181,4 @@ if (m) {
     if (g) play(g);
   }
 }
+requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove("boot-space")));

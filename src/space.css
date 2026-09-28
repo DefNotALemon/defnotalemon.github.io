@@ -118,6 +118,12 @@ body.lifting .panel,body.lifting .cab{backdrop-filter:none; -webkit-backdrop-fil
    Chrome can paint backdrop-filter children of an opacity:0 layer as a faint ghost on load. */
 .arcade{visibility:hidden}
 body.space .arcade{visibility:visible}
+.arcade{display:none} /* on the ground the arcade is not just invisible, it is not painted at all */
+body.space .arcade,body.lifting .arcade{display:block}
+/* reload in the arcade: <head> sets html.boot-space before the first paint, so neither floor flashes */
+html.boot-space .arcade{display:block; visibility:visible; transform:none; opacity:1; pointer-events:auto}
+html.boot-space .overlay,html.boot-space .foot{visibility:hidden; opacity:0}
+html.boot-space *{transition:none !important}
 body:not(.space) .cab{backdrop-filter:none; -webkit-backdrop-filter:none}
 body.space .overlay,body.space .foot{visibility:hidden}
 body.space{overflow:hidden}
