@@ -73,14 +73,16 @@ const mctx = mid.getContext("2d");
 const aim = { x: 0.5, y: 0.3 }; // smoothed pointer, in 0..1 screen space
 let auroraFrame = 0;
 
-function paintAurora(t, fade = 1) {
+function paintAurora(t, fade = 1, dt = 1 / 60) {
+  // ease the pointer so the curtain leans rather than snaps. Time-based (same feel as the
+  // old 0.22-per-frame at 60 Hz) so an uneven frame doesn't yank the curtain sideways.
+  const k = 1 - Math.exp(-dt * 15);
+  aim.x += (mouse.x / w - aim.x) * k;
+  aim.y += (mouse.y / h - aim.y) * k;
+
   if (fade <= 0.01) return;
   const time = reduced() ? 5.4 : t;
   const still = reduced();
-
-  // ease the pointer so the curtain leans rather than snaps
-  aim.x += (mouse.x / w - aim.x) * 0.22;
-  aim.y += (mouse.y / h - aim.y) * 0.22;
 
   // the pixel pass runs every frame now that it is cheap enough to
   if (auroraFrame++ % 1 === 0 || still) {
@@ -412,9 +414,25 @@ addEventListener("resize", () => setup());
 // Frame-pace watchdog. `best` learns the display's refresh interval (8.3 ms on a 120 Hz
 // panel, 16.7 ms at 60 Hz); if the recent average runs well behind it for a couple of
 // seconds, drop one resolution step. Hidden tabs and the first second after load are ignored.
-const pace = { best: 1000, avg: 0, n: 0, slow: 0, cool: 0, born: performance.now() };
+const pace = { best: 1000, avg: 0, n: 0, slow: 0, cool: 0, away: false, born: performance.now() };
 function watch(ms, now) {
   if (ms <= 0 || ms > 250 || document.hidden) return; // tab switch / breakpoint, not a real frame
+  // Only judge frames on the ground. Up in the arcade the cabinets' backdrop blur sits over a
+  // live canvas, and the lift itself runs page-sized transitions. Those slow frames used to knock
+  // the sky down a resolution step for good (sometimes mid-descent), which is what made the
+  // lights crawl and jitter once you came back down.
+  if (lift.p > 0 || lift.target > 0) {
+    pace.away = true;
+    return;
+  }
+  if (pace.away) {
+    // just landed: forget the trip and let things settle before judging again
+    pace.away = false;
+    pace.avg = pace.best;
+    pace.slow = 0;
+    pace.cool = Math.max(pace.cool, 90);
+    return;
+  }
   if (now - pace.born < 1000) return;
   pace.best = Math.max(6, Math.min(pace.best, ms * 1.02 + 0.2));
   pace.avg = pace.n++ ? pace.avg + (ms - pace.avg) * 0.05 : ms;
@@ -434,6 +452,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 let last = performance.now();
+let lastE = 0;
 function tick(now) {
   const t = now / 1000;
   watch(now - last, now);
@@ -443,7 +462,11 @@ function tick(now) {
   const e = easeInOut(lift.p); // 0 on the ground, 1 in the stars
   const rise = e * h; // how far the camera has climbed, in px
   const still = reduced();
-  const streak = still ? 0 : Math.abs(lift.vel) * h * 0.012;
+  // streak from the camera's actual (eased) speed, so it grows and fades with the motion
+  // instead of snapping on at full length and popping off when you land
+  const eVel = dt > 0 ? (e - lastE) / dt : 0;
+  lastE = e;
+  const streak = still ? 0 : Math.abs(eVel) * h * 0.012;
 
   drawSky(e);
   drawNebulae(e);
@@ -452,7 +475,8 @@ function tick(now) {
   drawField(stars, t, still ? 0 : t * 2, rise * 0.9, 1, streak);
 
   if (e < 0.999) {
-    paintAurora(t, 1 - Math.min(1, lift.p * 1.5));
+    // eased, like the land, so the curtain glides to a stop as you land instead of halting mid-slide
+    paintAurora(t, 1 - Math.min(1, e * 1.5), dt);
     ctx.drawImage(land, 0, rise * 1.35, w, h); // the land goes down faster than the sky
   }
 
