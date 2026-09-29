@@ -9,6 +9,7 @@
 //   controls — what the player needs to know before the coin drops
 //   itch     — optional itch.io page for this game; adds an "itch.io ↗" link on the cabinet
 //   url      — override if the game lives somewhere else (another repo, another host)
+//   newTab   — true opens the game in its own browser tab instead of the cabinet screen
 
 export const games = [
   {
@@ -48,6 +49,16 @@ export const games = [
     accent: ["#c6ff3d", "#ff7a2f"],
     controls: "keyboard · gamepad",
     url: "https://defnotalemon.github.io/switchback/",
+  },
+  {
+    id: "grass-hills",
+    title: "Grass Hills",
+    tag: "meadow walk · first person",
+    blurb:
+      "A windy afternoon on rolling hills. Wade through waist-high grass, watch the gusts roll across the far slopes, and wander out to the trees.",
+    accent: ["#b6e36a", "#7fb8ff"],
+    controls: "keyboard · mouse · gamepad",
+    newTab: true,
   },
 ];
 

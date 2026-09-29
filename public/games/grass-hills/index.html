@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grass Hills</title>
+<style>
+  :root { --ink: #f4f1e6; --dim: rgba(244,241,230,.72); }
+  html, body { margin: 0; height: 100%; background: #9fb8d6; overflow: hidden; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #view { display: block; width: 100vw; height: 100vh; }
+  #overlay {
+    position: fixed; inset: 0; display: grid; place-items: center; cursor: pointer;
+    background: radial-gradient(ellipse at 50% 60%, rgba(10,18,8,.15), rgba(10,18,8,.55));
+    color: var(--ink); text-align: center; transition: opacity .35s ease; user-select: none;
+  }
+  #overlay.hidden { opacity: 0; pointer-events: none; }
+  #overlay h1 { font: 600 clamp(40px, 7vw, 88px)/1 Georgia, "Times New Roman", serif; letter-spacing: .02em; margin: 0 0 .2em; text-shadow: 0 2px 24px rgba(0,0,0,.35); }
+  #overlay p { margin: .35em 0; color: var(--dim); font-size: 15px; letter-spacing: .02em; }
+  #overlay .go { display: inline-block; margin-top: 1.2em; padding: .7em 1.4em; border: 1px solid rgba(244,241,230,.55); border-radius: 999px; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); background: rgba(0,0,0,.18); }
+  #overlay .keys { margin-top: 1.6em; font-size: 13px; color: var(--dim); }
+  #overlay kbd { font: 12px ui-monospace, monospace; padding: 1px 6px; border: 1px solid rgba(244,241,230,.4); border-radius: 4px; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; color: var(--ink); background: #6f8a5a; font: 15px ui-sans-serif, system-ui; letter-spacing: .1em; text-transform: uppercase; transition: opacity .5s; }
+  body.ready #loading { opacity: 0; pointer-events: none; }
+  #fps { position: fixed; left: 10px; top: 8px; color: #fff; font: 12px ui-monospace, monospace; text-shadow: 0 1px 2px #000; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="overlay">
+  <div>
+    <h1>Grass Hills</h1>
+    <p>A windy afternoon in the meadow.</p>
+    <span class="go">Click to walk</span>
+    <div class="keys"><kbd>W A S D</kbd> walk &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump &nbsp; <kbd>Esc</kbd> let go of the mouse &nbsp; <kbd>F3</kbd> fps</div>
+  </div>
+</div>
+<div id="loading">Growing grass…</div>
+<div id="fps" hidden></div>
+<script type="module" src="./game.js"></script>
+</body>
+</html>

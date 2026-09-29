@@ -130,7 +130,7 @@ function cabinet(g) {
     <div class="cab-foot">
       <span class="ctl">${g.controls || ""}</span>
       ${g.itch ? `<a class="itch" href="${g.itch}" target="_blank" rel="noopener">itch.io ↗</a>` : ""}
-      <button type="button" class="coinslot" data-id="${g.id}">Insert coin <b>▸</b></button>
+      <button type="button" class="coinslot" data-id="${g.id}">Insert coin <b>${g.newTab ? "↗" : "▸"}</b></button>
     </div>`;
   el.querySelector(".coinslot").addEventListener("click", () => play(g));
   return el;
@@ -148,8 +148,13 @@ function renderCabinets() {
 /* ---------- the player ---------- */
 let current = null;
 function play(g) {
-  current = g;
   const url = gameUrl(g);
+  if (g.newTab) {
+    // big 3D games want the whole window and the mouse: give them their own tab
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  current = g;
   playerTitle.textContent = g.title;
   playerOpen.href = url;
   frame.src = url;
@@ -178,7 +183,7 @@ if (m) {
   setSpace(true, { animate: false });
   if (m[2]) {
     const g = games.find((x) => x.id === m[2]);
-    if (g) play(g);
+    if (g && !g.newTab) play(g);
   }
 }
 requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove("boot-space")));
